@@ -1,0 +1,1530 @@
+Nim Tutorial (Part I)
+
+Author:	Andreas Rumpf
+Version:0.10.2
+
+introduciton
+  "Der Mensch ist doch ein Augentier -- schöne Dinge wünsch ich mir."
+  
+   “人是视觉动物--我渴望美好事物。”   
+   
+
+  This document is a tutorial for the programming language Nim.This tutorial assumes that you are familiar with basic programming concepts like variables,types or stamements but is kept very basic.The manual contains many more examples of the advanced language features.
+
+这个文档是关于编程语言Nim的教程，这个教程假设你已经熟悉基本的编程语言概念，比如：变量，类型或者非常基本的语句。nim手册（nim：manual）中包含更多具有高级语言特性的例子。
+
+The first program(*???)
+
+   We start the tour with a modified(改进的)"hello world"program:
+
+   我们从一个改进的“hello world”程序开始我们的旅程   
+
+   #this is a comment               //单行注释
+   echo("What's your name? ")       //不用带分号
+   var name:string=readLine(stdin);
+   echo("Hi, ", name, "!")
+
+Save this code to the file "greetings.nim". Now compile and run it:
+
+把这个代码保存成文件“greetings.nim”，现在编译，运行它：
+
+nim compile --run greetings.nim
+
+With the --run switch Nim executes the file automatically after compilation. You can give your program command line arguments by appending them after the filename:
+
+带有--run开关选项，Nim会在编译之后自动执行源文件。你可以在文件名后面附加程序命令行参数：
+
+nim compile --run greetings.nim arg1 arg2
+
+Commonly used commands and switches have abbreviations, so you can also use:
+
+常用的命令和开关有缩写，所以你也可以这样使用：
+
+nim c -r greetings.nim
+
+To compile a release（释放，排放，解除） version use
+
+编译一个发行版本用：
+
+nim c -d:release greetings.nim
+
+By default the Nim compiler generates a large amount of runtime checks aiming for your debugging pleasure. With -d:release these checks are turned off and optimizations（优化） are turned on.
+
+默认情况下，nim编译器针对你的调试喜好生成大量运行时检查。伴随-d:release这些检查被关闭，优化会被打开
+
+Though it should be pretty obvious what the program does, I will explain the syntax(语法): statements which are not indented are executed when the program starts. Indentation is Nim's way of grouping statements. Indentation is done with spaces only, tabulators(跳格键) are not allowed.
+
+虽然程序是干什么的应该是很明显的，我将解释这个语法：声明不缩进执行当程序启动的时候(声明语句不用缩进）。缩进是nim分组声明的方法。缩进只能使用空格，制表符是不允许的
+
+String literals are enclosed in double quotes.The var statement declares a new variable named name of type string with the value that is returned by the readLine procedure. Since the compiler knows that readLine returns a string, you can leave out the type in the declaration (this is called local type inference). So this will work too:
+
+字符串常量使用双引号括起。var语句声明一个新变量，指定一个字符串类型的名称带有一个通过readLine过程返回的值。由于编译器知道readLine返回一个字符串，你可以省略类型声明（这叫做本地类型推理）
+
+var name = readLine(stdin)
+
+Note that this is basically(基本上) the only form of type inference(推断) that exists in Nim: it is a good compromise between brevity(简洁) and readability(可读性).
+
+这基本上是nim中存在的类型推断的唯一形式：它是一个很好的妥协在简洁和可读性之间。
+
+The "hello world" program contains several identifiers(标识符) that are already known to the compiler: echo, readLine, etc. These built-ins（内嵌的，固有的） are declared in the system module(系统模块) which is implicitly(暗含的) imported by any other module.
+
+“hello world”程序中包含的几个标识符已经被编译器熟知：echo，readLine等。这些在系统模块中内置的声明暗含的被导入到其他的模块。
+
+Lexical elements(词汇元素)
+
+Let us look at Nim's lexical elements in more detail: like other programming languages Nim consists of (string) literals, identifiers, keywords, comments, operators, and other punctuation marks（我认为翻译成界符较合适一点）.
+
+让我们更详细的看看nim的词法元素：像其他编程语言一样，Nim包含(字符串)常量，标识符，关键字，注释，运算符，和其他标点符号
+
+String and character literals
+
+字符串和字符常量
+
+String literals are enclosed in double quotes; character literals in single quotes.Special characters are escaped with \: \n means newline, \t means tabulator, etc. There are also raw string literals:
+
+字符串常量用双引号，字符常量用单引号。特殊转移字符用\:\n代表换行，\t制表符，跳格键等。这也有原始字符串常量
+
+r"C:\program files\nim"
+
+In raw literals the backslash（反斜杠符号） is not an escape character（转移字符）
+
+在原始常量中反斜杠符号不是一个转移字符
+
+The third and last way to write string literals are long string literals. They are written with three quotes: """ ... """; they can span over multiple lines and the \ is not an escape character either. They are very useful for embedding HTML code templates for example.
+
+长字符串用三引号"""...""";它们可以跨越多行，并且\也不是转义字符。他们是非常有用的，例如嵌入HTML代码模板。
+
+comments//注释
+
+Comments start anywhere outside a string or character literal with the hash character #. Documentation comments start with ##:
+
+注释可以在一个字符串或字符外的任何地方开始，以哈希字符#开始。文档注释以##开始
+
+# A comment.
+   var myVariable: int ## a documentation comment
+
+Documentation comments are tokens; they are only allowed at certain places in the input file as they belong to the syntax tree! This feature enables simpler documentation generators.
+
+文档注释标记：文档注释只允许在输入文件的某些地方，因为它们属于语法树。这个特征可以用于简单文档生成
+
+You can also use the discard statement together with long string literals to create block comments:
+
+你也可以用废弃的声明和长字符串来创建注释块
+
+    discard """ You can have any Nim code text commented
+    out inside this with no indentation restrictions.
+      yes("May I ask a pointless question?") """
+
+numbers
+
+Numerical literals are written as in most other languages. As a special twist, underscores are allowed for better readability: 1_000_000 (one million). A number that contains a dot (or 'e' or 'E') is a floating point literal: 1.0e9 (one billion). Hexadecimal literals are prefixed with 0x, binary literals with 0b and octal literals with 0o. A leading zero alone does not produce an octal.
+
+数值常量在很多语言中都存在；作为一个特殊的扭曲，强调允许更好的可读性，1_000_000 (一百万)。一个数带有点(或者e或E)的是一个float常数。十六进制常量以0x开始，二进制以0b开始，八进制以0o开始。一个单独的前导0不是八进制数
+
+the var statements
+
+变量声明
+
+The var statement declares a new local or global variable:
+
+var语句声明一个局部或全局变量
+
+var x, y: int                  # declares x and y to have the type ``int``  声明了变量x，y是整形
+
+Indentation can be used after the var keyword to list a whole section of variables:
+
+缩进可以用在var关键字列出一整段变量之后
+
+var
+  x, y: int
+  # a comment can occur here too
+  a, b, c: string
+
+the assignment statement
+
+赋值语句
+
+The assignment statement assigns a new value to a variable or more generally(普遍的) to a storage location:
+
+复制语句将一个新值赋值给一个变量或者一个更普遍的存储空间
+
+var x = "abc"   # introduces a new variable `x` and assigns a value to it  
+x = "xyz"       # assigns a new value to `x`
+
+= is the assignment operator. The assignment operator cannot be overloaded, overwritten or forbidden, but this might change in a future version of Nim. You can declare multiple variables with a single assignment statement and all the variables will have the same value:
+
+=是赋值操作符。赋值操作不能被重载，重写，或隐藏，但这可能会在nim的未来版本中发生变化。你可以用一个赋值语句来声明多个变量，所有的变量都将具有相同的值。
+
+var x, y = 3  # assigns 3 to the variables `x` and `y`
+echo "x ", x  # outputs "x 3"
+echo "y ", y  # outputs "y 3"
+x = 42        # changes `x` to 42 without changing `y`
+echo "x ", x  # outputs "x 42"
+echo "y ", y  # outputs "y 3"
+
+Note that declaring multiple variables with a single assignment which calls a procedure can have unexpected results: the compiler will unroll the assignments and end up calling the procedure several times. If the result of the procedure depends on side effects, your variables may end up having different values! For safety use only constant values.
+
+注意：声明多个变量用一个赋值语句，调用一个过程会有出乎意料的结果：编译器将展开赋值语句，以调用这个程序结束。如果这个过程的结果取决于副作用，你的变量可能以不同的值结束。为了安全，仅仅使用常量。
+
+constants
+
+Constants are symbols which are bound to a value. The constant's value cannot change. The compiler must be able to evaluate the expression in a constant declaration at compile time:
+
+常量是绑定一个值的符号。这个常量值不能改变。编译器必须能够在编译时评估表达式在一个常量的声明
+
+const x = "abc" # the constant x contains the string "abc"
+
+Indentation(缩进) can be used after the const keyword to list a whole section of constants:
+
+缩进可以用在const关键字列出一整段常数之后
+
+const
+  x = 1
+  # a comment can occur here too
+  y = 2
+  z = y + 5 # computations are possible
+
+The let statement
+
+The let statement works like the var statement but the declared symbols are single assignment variables: After the initialization(初始化) their value cannot change:
+
+let语句的作用与var语句相同，但是这个声明的符号只能单变量赋值。在初始化之后值不能改变
+
+let x = "abc"            # introduces a new variable `x` and binds a value to it
+x = "xyz"                # Illegal: assignment to `x`
+
+The difference between let and const is: let introduces a variable that can not be re-assigned, const means "enforce compile time evaluation and put it into a data section":
+
+let语句和const语句的不同在于：let声明一个变量不能重新分配值，const意味着执行编译时评估和把它变成一个数据段
+
+const input = readLine(stdin) # Error:constant expression expected 期望常量表达式//错误信息：Error: cannot evaluate at compile time: stdin 在编译时无法评估 
+let input = readLine(stdin)   # works
+
+Control flow statements
+
+控制流语句
+
+The greetings program consists of 3 statements that are executed sequentially. Only the most primitive programs can get away with that: branching and looping are needed too.
+
+第一个greeting.nim程序包含3个语句，它们顺序执行。只有最原始的程序可以逃脱：分支和循环同样需要
+
+If statement
+
+The if statement is one way to branch the control flow:
+
+if语句是控制流的一个分支
+
+let name = readLine(stdin)
+if name == "":
+   echo("Poor soul, you lost your name?")
+elif name == "name":
+   echo("Very funny, your name is name.")
+else:
+   echo("Hi, ", name, "!")
+
+There can be zero or more elif parts, and the else part is optional. The keyword elif is short for else if, and is useful to avoid excessive（过多的，过度的） indentation. (The "" is the empty string. It contains no characters.)
+
+这可以有0个或多个elif部分，else部分也是可以选择的。elif关键字比else if短和有效避免过多的缩进
+
+Case statement
+
+Another way to branch is provided by the case statement. A case statement is a multi-branch:
+
+case语句提供另一种分支方式，一个case语句是一个多分支的
+
+let name = readLine(stdin)
+case name
+of "":
+  echo("Poor soul, you lost your name?")
+of "name":
+  echo("Very funny, your name is name.")
+of "Dave", "Frank":
+  echo("Cool name!")
+else:
+  echo("Hi, ", name, "!")
+
+As it can be seen, for an of branch a comma separated list of values is also allowed.
+
+正如上面所见，对于一个分支以逗号分割的值列表是允许的
+
+The case statement can deal with integers, other ordinal types and strings. (What an ordinal type is will be explained soon.) For integers or other ordinal types value ranges are also possible:
+
+case语句可以处理整数，字符串和其他序列类型。（什么是一个序数类型将稍后解释）对于整数或者其他序数类型值的范围也是可能的：
+
+# this statement will be explained later:
+from strutils import parseInt
+
+echo("A number please: ")
+let n = parseInt(readLine(stdin))
+case n
+of 0..2, 4..7: echo("The number is in the set: {0, 1, 2, 4, 5, 6, 7}")
+of 3, 8: echo("The number is 3 or 8")
+
+However, the above code does not compile: the reason is that you have to cover every value that n may contain, but the code only handles the values 0..8. Since it is not very practical to list every other possible integer (though it is possible thanks to the range notation), we fix this by telling the compiler that for every other value nothing should be done:
+
+然而，上面的代码不能编译：原因是你必须覆盖n可能包含的每一个值，但是这个代码仅处理了值0...8。因为它列出所有可能的值是很不实际的（尽管这个可能的由于范围符号），我们解决这个通过告诉编译器对于其他的每个值什么都不应该做：
+...
+case n
+of 0..2, 4..7: echo("The number is in the set: {0, 1, 2, 4, 5, 6, 7}")
+of 3, 8: echo("The number is 3 or 8")
+else: discard
+
+The empty discard statement is a do nothing statement. The compiler knows that a case statement with an else part cannot fail and thus the error disappears. Note that it is impossible to cover all possible string values: that is why string cases always need an else branch.
+
+这个空废弃语句是什么也不做的声明。编译器知道一个case语句带有一个else部分不会失败，因此错误消失了。注意，要涵盖所有可能的字符串值是不可能的，这就是为什么字符串case总是需要一个else分支
+
+In general the case statement is used for subrange types or enumerations where it is of great help that the compiler checks that you covered any possible value.
+
+在一般情况下case语句用于子界类型或枚举是非常有用的，编译器将检查所有可能的值。
+
+While statement
+
+The while statement is a simple looping construct:
+
+while语句是一个简单的循环构造
+
+
+echo("What's your name? ")
+var name = readLine(stdin)
+while name == "":
+  echo("Please tell me your name: ")
+  name = readLine(stdin)
+  # no ``var``, because we do not declare a new variable here
+
+The example uses a while loop to keep asking the user for his name, as long as he types in nothing (only presses RETURN).
+
+这个例子用一个while循环一直询问用户的姓名，只要他什么都没有输入（只按RETURN）
+
+For statement
+
+The for statement is a construct to loop over any element an iterator provides. The example uses the built-in countup iterator:
+
+for语句是一个结构去遍历一个构造器提供的所有值。该示例使用内置countup迭代器
+
+echo("Counting to ten: ")
+for i in countup(1, 10):
+  echo($i)
+# --> Outputs 1 2 3 4 5 6 7 8 9 10 on different lines
+
+The built-in $ operator turns an integer (int) and many other types into a string. The variable i is implicitly(隐含的) declared by the for loop and has the type int, because that is what countup returns. i runs through the values 1, 2, .., 10. Each value is echo-ed. This code does the same:
+
+内置的$操作符将一个整形（int）和许多其他的类型转化为一个字符串类型。变量i通过循环隐式的声明为int，因为那是迭代器countup返回的结果。i的值是1-10，每个值都被echo-ed上面的代码也可以这样写：
+
+echo("Counting to 10: ")
+var i = 1
+while i <= 10:
+  echo($i)
+  inc(i)                  # increment i by 1
+# --> Outputs 1 2 3 4 5 6 7 8 9 10 on different lines
+
+Counting down can be achieved as easily (but is less often needed):
+
+countdown可以很容易的被实现（但是它很少使用）
+
+echo("Counting down from 10 to 1: ")
+for i in countdown(10, 1):
+  echo($i)
+# --> Outputs 10 9 8 7 6 5 4 3 2 1 on different lines
+
+Since counting up occurs so often in programs, Nim also has a .. iterator that does the same:
+
+由于countup在程序中经常出现。nim也有一个迭代器功能相同
+
+for i in 1..10:
+  ...
+
+Scopes and the block statement
+
+作用域和块语句
+
+Control flow statements have a feature not covered yet: they open a new scope. This means that in the following example, x is not accessible outside the loop:
+
+控制流语句有一个特性没有包括：他们打开一个新的范围。这意味着，在下面的例子中，x在循环外是不可访问的：
+
+while false:
+  var x = "hi"
+echo(x) # does not work
+
+A while (for) statement introduces an implicit block. Identifiers are only visible within the block they have been declared. The block statement can be used to open a new block explicitly（明确的）:
+
+一个while或者for语句声明了一个隐含的块。标识符只在声明它的块中可以访问。一个块语句可以用来打开一个新的块语句。
+
+block myblock:
+  var x = "hi"
+echo(x) # does not work either
+
+The block's label (myblock in the example) is optional.
+
+块标签（例子中的myblock）是可选择的。
+
+Break statement
+
+A block can be left prematurely（过早地） with a break statement. The break statement can leave a while, for, or a block statement. It leaves the innermost(最深处的，隐私的) construct, unless a label of a block is given:
+
+break语句可以提前跳出一个块。break可以跳出while,for循环以及块语句。break是跳出最深处的结构，除非给出了一个块的标签。
+
+block myblock:
+  echo("entering block")
+  while true:
+    echo("looping")
+    break                           # leaves the loop, but not the block  离开循环，但不离开块结构
+  echo("still in block")
+
+block myblock2:
+  echo("entering block")
+  while true:
+    echo("looping")
+    break myblock2                 # leaves the block (and the loop)     离开块结构（和循环结构）
+  echo("still in block")
+
+Continue statement
+
+Like in many other programming languages, a continue statement starts the next iteration(反复，重复的事) immediately:
+
+就像在其他很多编程语言中，continue语句直接进入下一次迭代
+
+while true:
+  let x = readLine(stdin)
+  if x == "": continue
+  echo(x)
+
+When statement
+
+Example:
+when system.hostOS == "windows":
+  echo("running on Windows!")
+elif system.hostOS == "linux":
+  echo("running on Linux!")
+elif system.hostOS == "macosx":
+  echo("running on Mac OS X!")
+else:
+  echo("unknown operating system")
+
+The when statement is almost identical（等同的） to the if statement with some differences:
+
+while语句与if语句是大致相同的，以下是一些不同的地方
+
+Each condition has to be a constant expression since it is evaluated by the compiler.
+
+每一个条件都必须是一个常量表达式，因为它要通过编译器评估   (????)
+
+The statements within a branch do not open a new scope.
+
+在一个分支语句中不打开一个新的范围  (?????)
+
+The compiler checks the semantics and produces code only for the statements that belong to the first condition that evaluates to true.
+
+只有第一条件评估为true时编译器才会检查语句的语义和生成代码。 (????)
+
+The when statement is useful for writing platform specific code, similar to the #ifdef construct in the C programming language.
+
+when语句对于写特定平台的代码很有用，类似于c编程语言中的#ifdef构造
+
+Note: To comment out a large piece of code, it is often better to use a when false: statement than to use real comments. This way nesting is possible.？？？？？？？
+
+注意：要注释一大块代码，通常使用when false：statement比用真正的注释要好。这种方式的嵌套是可能的
+
+Statements and indentation
+
+语句和缩进
+
+Now that we covered the basic control flow statements, let's return to Nim indentation rules.
+
+现在我们学习了基本的控制流语句，让我们重新回到nim的缩进规则
+
+In Nim there is a distinction（区别） between simple statements and complex statements. Simple statements cannot contain other statements: Assignment, procedure calls or the return statement belong to the simple statements. Complex statements like if, when, for, while can contain other statements. To avoid ambiguities（歧义）, complex statements always have to be indented, but single simple statements do not:
+
+在nim中，简单语句与复杂语句是有区别的。简单语句不能包含其他语句，赋值，过程调用，return语句都属于简单语句。if,when,for,while都属于复杂语句，复杂语句可以包含其他语句。为了避免歧义，复杂语句必须有缩进，单一的简单语句没有缩进。
+
+# no indentation needed for single assignment statement:   对于单一的赋值语句不需要缩进
+if x: x = false
+
+# indentation needed for nested（嵌套） if statement:        对于嵌套的if语句需要缩进
+if x:
+  if y:
+    y = false
+  else:
+    y = true
+
+# indentation needed, because two statements follow the condition:    需要缩进，因为条件后面有两个语句
+if x:
+  x = false
+  y = false
+
+Expressions are parts of a statement which usually result in a value. The condition in an if statement is an example for an expression. Expressions can contain indentation at certain places for better readability:
+
+表达式是一个语句的一部分，它通常返回一个值。例如if语句的条件就是表达式的一个例子。表达式可以在特定的地方包含缩进为了更好的可读性。
+
+if thisIsaLongCondition() and
+    thisIsAnotherLongCondition(1,
+       2, 3, 4):
+  x = true
+
+As a rule of thumb, indentation within expressions is allowed after operators, an open parenthesis（圆括号） and after commas（逗号）.
+
+作为一个经典法则。在表达式中操作符，开括号，逗号之后的缩进是允许的。
+
+With parenthesis（圆括号） and semicolons（分号） (;) you can use statements where only an expression is allowed:
+
+用圆括号和分号（；），你可以用只有一个表达式的语句是允许的。
+
+# computes fac(4) at compile time:
+const fac4 = (var x = 1; for i in 1..4: x *= i; x)
+
+
+Procedures
+
+To define new commands like echo and readLine in the examples, the concept of a procedure is needed. (Some languages call them methods or functions.) In Nim new procedures are defined with the proc keyword:
+
+为了定义新的命令如echo和readLine在例子中,进程(过程)的概念是需要的。（有些语言中叫做方法或者函数）。在nim新进程(过程)用proc关键字定义
+
+proc yes(question: string): bool =
+  echo(question, " (y/n)")
+  while true:
+    case readLine(stdin)
+    of "y", "Y", "yes", "Yes": return true
+    of "n", "N", "no", "No": return false
+    else: echo("Please be clear: yes or no")
+
+if yes("Should I delete all your important files?"):
+  echo("I'm sorry Dave, I'm afraid I can't do that.")
+else:
+  echo("I think you know what the problem is just as well as I do.")
+
+This example shows a procedure named yes that asks the user a question and returns true if he answered "yes" (or something similar) and returns false if he answered "no" (or something similar). A return statement leaves the procedure (and therefore the while loop) immediately. The (question: string): bool syntax describes that the procedure expects a parameter named question of type string and returns a value of type bool. Bool is a built-in type: the only valid values for bool are true and false. The conditions in if or while statements should be of the type bool.
+
+这个程序展示了一个名字是yes的过程，它问了用户一个问题，如果他回答“yes”（或者其他相似的答案）返回true，如果他回答“no”（或者其他相似的答案）返回false。一个return语句直接离开这个过程（和while循环）。这个(question: string): bool语法描述的是这个过程有一个名字为question的参数，参数类型为字符串类型，返回一个bool类型的值。bool类型是一个内置类型：bool类型唯一有效的值是true和false。if或者while语句中的条件语句就应该为bool类型。
+
+Some terminology: in the example question is called a (formal) parameter, "Should I..." is called an argument that is passed to this parameter.
+
+一些专业术语：在例子中question叫做正式参数，"Should I..."叫做argument传递给这个参数
+
+Result variable
+
+A procedure that returns a value has an implicit result variable declared that represents the return value. A return statement with no expression is a shorthand for return result. The result value is always returned automatically at the end a procedure if there is no return statement at the exit.
+
+一个过程返回一个值有一个隐式的结果变量声明，它代表返回值。一个没有表达式的返回语句是一个返回结果的简称。结果值总是自动返回在一个过程的末尾如果在出口没有返回语句。
+
+proc sumTillNegative(x: varargs[int]): int =
+  for i in x:
+    if i < 0:
+      return
+    result = result + i
+
+echo sumTillNegative() # echos 0
+echo sumTillNegative(3, 4, 5) # echos 12
+echo sumTillNegative(3, 4 , -1 , 6) # echos 7
+
+The result variable is already implicitly declared at the start of the function, so declaring it again with 'var result', for example, would shadow it with a normal variable of the same name. The result variable is also already initialised with the type's default value. Note that referential data types will be nil at the start of the procedure, and thus may require manual（手动的，手工的，手册） initialisation（初始化）.
+
+result变量已经隐式的声明在函数开始处，所以再次声明，例如：'var result'，将会存在一个与result相同名字的正常变量。result变量也已经初始化为类型默认值。注意：引用数据类型将会是零在过程开始处，因此可能需要手动初始化。
+
+Parameters
+
+Parameters are constant（恒定的，不变的） in the procedure body. By default, their value cannot be changed because this allows the compiler to implement parameter passing in the most efficient way. If a mutable（易变的） variable is needed inside the procedure, it has to be declared with var in the procedure body. Shadowing the parameter name is possible, and actually an idiom（习语，（语言）风格，惯用语法）:
+
+在过程中参数是恒定的。默认情况下，它们的值不能改变因为这允许编译器以一种更有效的方式实现参数传递。如果在过程中需要一个易变的变量，它必须在过程中用var声明。与参数相同的名字是可以的，事实上这是一个惯用语法。
+
+proc printSeq(s: seq, nprinted: int = -1) =
+  var nprinted = if nprinted == -1: s.len else: min(nprinted, s.len)
+  for i in 0 .. <nprinted:
+    echo s[i]
+
+If the procedure needs to modify the argument for the caller, a var parameter can be used:
+
+如果过程需要修改调用者的参数，一个var参数需要用到:(我自己理解这句话的意思是：就像其他语言，值调用是不会改变实参的值，要想改变实参的值要通过引用调用，nim中是在过程中将参数用var声明就可以实现调用参数的改变)
+
+proc divmod(a, b: int; res, remainder: var int) =
+  res = a div b        # integer division
+  remainder = a mod b  # integer modulo operation
+
+var
+  x, y: int
+divmod(8, 5, x, y) # modifies x and y
+echo(x)
+echo(y)
+
+In the example, res and remainder are var parameters（变量参数）. Var parameters can be modified by the procedure and the changes are visible to the caller. Note that the above example would better make use of a tuple as a return value instead of using var parameters.
+
+在例子中，res和remainder是var参数。var参数可以通过过程修改，这个改变对于调用者是可见的。注意：上面的例子使用元组作为返回值而不是使用var参数作为返回值将会更好。
+
+Discard statement
+
+To call a procedure that returns a value just for its side effects and ignoring its return value, a discard statement has to be used. Nim does not allow to silently throw away a return value:
+
+调用一个带有返回值的过程仅仅是为了它的其他的作用，忽视它的返回值，一个discard语句必须使用。nim不允许默默地丢掉一个返回值：
+
+discard yes("May I ask a pointless question?")
+
+The return value can be ignored implicitly if the called proc/iterator has been declared with the discardable pragma（编译指示，杂注）:
+
+返回值会隐式的忽略如果调用的过程或者迭代器已经带有discardable编译指示声明：
+
+proc p(x, y: int): int {.discardable.} =
+  return x + y
+
+p(3, 4) # now valid
+
+The discard statement can also be used to create block comments as described in the Comments section.
+
+discard语句也可以在注释部分创建作为描述的块注释
+
+Named arguments
+
+Often a procedure has many parameters and it is not clear in which order the parameters appear. This is especially true for procedures that construct a complex data type. Therefore the arguments to a procedure can be named, so that it is clear which argument belongs to which parameter:
+
+经常一个过程有多个参数，而且参数出现的顺序并不是明确的。对于一个过程构造了一个复杂的数据类型是非常正确的。因此一个过程的的参数可以是命名的，以至于哪个说法属于哪个参数是明确的。
+
+
+proc createWindow(x, y, width, height: int; title: string;
+                  show: bool): Window =
+   ...
+
+var w = createWindow(show = true, title = "My Application",
+                     x = 0, y = 0, height = 600, width = 800)
+
+Now that we use named arguments to call createWindow the argument order does not matter anymore. Mixing named arguments with ordered arguments is also possible, but not very readable:
+
+现在我们使用命名参数去调用createWindow过程的顺序参数已经没有问题了。命名参数和顺序参数的混合也是可以的，但是没有可读性：
+
+var w = createWindow(0, 0, title = "My Application",
+                     height = 600, width = 800, true)
+
+The compiler checks that each parameter receives exactly one argument.
+
+编译器检查每个参数确切地接收一个参数。
+
+Default values
+
+To make the createWindow proc easier to use it should provide default values, these are values that are used as arguments if the caller does not specify them:
+
+为了使createWindow过程易于使用它应该提供默认值，这些值将作为参数值如果调用者没有明确的指定它们：
+
+proc createWindow(x = 0, y = 0, width = 500, height = 700,
+                  title = "unknown",
+                  show = true): Window =
+   ...
+
+var w = createWindow(title = "My Application", height = 600, width = 800)
+
+
+Now the call to createWindow only needs to set the values that differ from the defaults.
+
+现在调用createWindow仅仅需要不同于默认值的值。
+
+Note that type inference works for parameters with default values; there is no need to write title: string = "unknown", for example.
+
+注意：类型推断作用于参数有默认值；例如：这里没有必要写title: string = "unknown"
+
+Overloaded procedures
+
+Nim provides the ability to overload procedures similar to C++:
+
+nim提供了与c++相似的重载过程的功能
+
+proc toString(x: int): string = ...
+proc toString(x: bool): string =
+  if x: result = "true"
+  else: result = "false"
+
+echo(toString(13))   # calls the toString(x: int) proc
+echo(toString(true)) # calls the toString(x: bool) proc
+
+(Note that toString is usually the $ operator in Nim.) The compiler chooses the most appropriate proc for the toString calls. How this overloading resolution algorithm works exactly is not discussed here (it will be specified in the manual soon). However, it does not lead to nasty surprises and is based on a quite simple unification algorithm. Ambiguous calls are reported as errors.
+
+（注意在nim中toString常常使用$操作符）对于toString的调用编译器会选择最合适的过程。这个重载解析算法具体是怎样工作的不在这里讨论（它将在手册中详述）。然而，它不会引起糟糕的意外，它是基于一个非常简单的统一算法。模糊不清的调用将会报错。
+
+Operators
+
+The Nim library makes heavy use of overloading - one reason for this is that each operator like + is a just an overloaded proc. The parser lets you use operators in infix notation (a + b) or prefix notation (+ a). An infix operator always receives two arguments, a prefix operator always one. Postfix operators are not possible, because this would be ambiguous: does a @ @ b mean (a) @ (@b) or (a@) @ (b)? It always means (a) @ (@b), because there are no postfix operators in Nim.
+
+nim库大量使用重载--一个原因是每一个操作符比如+只是一个重载的过程。解析器允许你使用操作符以中缀表示法或者前缀表示法。一个中缀操作符总是接收两个参数，一个前缀操作符只有一个参数。后缀操作符是不可能的，因为那是模棱两可的。例如：a @ @ b 意味着 (a) @ (@b) 还是 (a@) @ (b)?它总是意味着(a) @ (@b)，因为在nim中没有后缀操作符。
+
+Apart from a few built-in keyword operators such as and, or, not, operators always consist of these characters: + - * \ / < > = @ $ ~ & % ! ? ^ . |
+
+除了一些内置的关键字操作符例如：and，or，not；操作符通常包含这些字符： + - * \ / < > = @ $ ~ & % ! ? ^ . |
+
+User defined operators are allowed. Nothing stops you from defining your own @!?+~ operator, but readability can suffer.
+
+用户定义的操作符是允许的。没什么阻止你定义你自己@!?+~操作符，但是可读性会遭到破坏。
+
+The operator's precedence is determined by its first character. The details can be found in the manual.
+
+操作符的优先级是由它的第一个字符决定的。相关细节可以在手册中找到。
+
+To define a new operator enclose the operator in backticks "``":
+
+为了定义一个新的操作符，用引号括起操作符：
+
+proc `$` (x: myDataType): string = ...
+# now the $ operator also works with myDataType, overloading resolution
+# ensures that $ works for built-in types just like before
+
+The "``" notation can also be used to call an operator just like any other procedure:
+
+"''"标记可以用来调用一个操作符就像调用其他过程。
+
+if `==`( `+`(3, 4), 7): echo("True")
+
+Forward declarations
+
+Every variable, procedure, etc. needs to be declared before it can be used. (The reason for this is compilation efficiency.) However, this cannot be done for mutually recursive procedures:
+
+每个变量，过程等，在它可以使用之前需要声明。（对于这个原因编译效率）。然而，对于相互递归程序这是不能做的。
+
+# forward declaration:
+proc even(n: int): bool
+
+proc odd(n: int): bool =
+  n == 1 or even(n-1)
+
+proc even(n: int): bool =
+  n == 0 or odd(n-1)
+
+Here odd depends on even and vice versa（反过来也一样）. Thus even needs to be introduced to the compiler before it is completely defined. The syntax for such a forward declaration is simple: just omit the = and the procedure's body.
+
+这里odd依赖于even，反之亦然。因此even需要在它完全定义之前介绍给编译器。对于这样一个提前声明的语法是简单的，仅仅省略=和过程的主题
+
+Later versions of the language may get rid of the need for forward declarations.
+
+以后的语言版本可能会移除提前声明的需要
+
+The example also shows that a proc's body can consist of a single expression whose value is then returned implicitly.
+
+这个例子也展示了一个过程的主体可以包含一个单一的表达式，它的值隐式的返回。
+
+Iterators
+
+Let's return to the boring counting example:
+
+让我们回到无聊的计数实例：
+
+echo("Counting to ten: ")
+for i in countup(1, 10):
+  echo($i)
+
+Can a countup proc be written that supports this loop? Lets try:
+
+可以写一个conutup过程支持这个循环吗？让我们试试
+
+proc countup(a, b: int): int =
+  var res = a
+  while res <= b:
+    return res
+    inc(res)
+
+//reniterator.nim(8, 7) Error: statement not allowed after 'return', 'break', 'raise' or 'continue'
+
+However, this does not work. The problem is that the procedure should not only return, but return and continue after an iteration has finished. This return and continue is called a yield statement. Now the only thing left to do is to replace the proc keyword by iterator and there it is - our first iterator:
+
+然而，这不工作。问题是这个过程应该不仅返回，而且返回和继续在一个迭代器完成之后。这个返回和继续叫做一个yield语句。现在剩下的唯一要做的事情是用iterator替换proc关键字，这是我们的第一个迭代器：
+
+iterator countup(a, b: int): int =
+  var res = a
+  while res <= b:
+    yield res
+    inc(res)
+
+Iterators look very similar to procedures, but there are several important differences:
+
+迭代器看起来与过程很像。但这存在几点很大的不同：
+
+Iterators can only be called from for loops.
+
+迭代器只能被循环调用
+
+Iterators cannot contain a return statement and procs cannot contain a yield statement.
+
+迭代器不能包含return语句，过程不能包含yield语句。
+
+Iterators have no implicit result variable.
+
+迭代器没有隐含的result变量
+
+Iterators do not support recursion.
+
+迭代器不支持递归
+
+Iterators cannot be forward declared, because the compiler must be able to inline an iterator. (This restriction will be gone in a future version of the compiler.)
+
+迭代器不能提前声明，因为编译器必须能够内联一个迭代器（这个限制将会在未来版本的编译器中消失）
+
+However, you can also use a closure iterator to get a different set of restrictions. See first class iterators for details. Iterators can have the same name and parameters as a proc, essentially they have their own namespace. Therefore it is common practice to wrap iterators in procs of the same name which accumulate the result of the iterator and return it as a sequence, like split from the strutils module.
+
+然而，你也可以使用一个封闭的迭代器来获得一组不同的限制。详情见第一类迭代器。迭代器可以有相同的名字和参数作为一个过程，基本上它们有自己的命名空间。因此它常见的做法是过程中相同名字的迭代器，积累迭代器的结果，并将它们作为一个序列返回，例如strutils模块的划分。
+
+
+Basic types
+
+This section deals with the basic built-in types（基本的内置类型） and the operations that are available for them in detail.
+
+这个部分详细的讨论基本内置类型，以及可用于它们的操作符。
+
+Booleans
+
+The boolean type is named bool in Nim and consists of the two pre-defined values true and false. Conditions in while, if, elif, when statements need to be of type bool.
+
+在nim中boolean类型用被命名为bool，它包含两个预定义的值：true和false。while，if，elif，when语句中的条件类型需要是bool类型。
+
+The operators not, and, or, xor（异或运算）, <, <=, >, >=, !=, == are defined for the bool type. The and and or operators perform short-cut（简捷） evaluation.
+
+这些操作符：not，and，or，xor，<, <=, >, >=, !=, ==都为bool类型定义了。and和or操作符执行简捷评估（自己理解：当and或or链接多个表达式的时候，比如：p1 and p1，只有当p1为真时，才会评估p2）。
+
+Example:
+while p != nil and p.name != "xyz":
+  # p.name is not evaluated if p == nil
+  p = p.next
+
+Characters
+
+The character type is named char in Nim. Its size is one byte. Thus it cannot represent an UTF-8 character, but a part of it.(???) The reason for this is efficiency: for the overwhelming(势不可挡的，压倒一切的，巨大的) majority of use-cases, the resulting programs will still handle UTF-8 properly as UTF-8 was specially designed for this. Character literals are enclosed in single quotes.
+
+在nim中字符类型被命名为char。它的大小是一个字节。因此它不能表示一个UTF-8字符，只是它的一部分。这样做的原因是效率：在绝大多数情况下使用，由此产生的程序仍将会处理UTF-8，因此UTF-8是特意为这设计的。字符常量用单引号括起来。
+
+Chars can be compared with the ==, <, <=, >, >= operators. The $ operator converts a char to a string. Chars cannot be mixed with integers; to get the ordinal value of a char use the ord proc. Converting from an integer to a char is done with the chr proc.
+
+字符可以用==, <, <=, >, >=操作符作比较。$操作符将一个字符型转化为一个字符串型。字符不能混合整形；为了得到一个字符的序号值使用ord过程，将一个整形转化为一个字符型用chr过程。
+
+Strings
+
+String variables in Nim are mutable(易变的，不定的), so appending to a string is quite efficient. Strings in Nim are both zero-terminated（以'0'结束） and have a length field. One can retrieve（检索，取回） a string's length with the builtin len procedure; the length never counts the terminating zero. Accessing the terminating zero is no error and often leads to simpler code:
+
+在nim中字符串是易变的，所以拓展字符串是很有效率的。nim中的字符串以\0结束，并有一定的长度。可以用内置的len函数取得字符串的长度，字符串长不包括结束的\0.访问终端的\0不是错误的，经并且常可以利用结尾的0来简化程序。
+
+if s[i] == 'a' and s[i+1] == 'b':
+  # no need to check whether ``i < len(s)``!  (i<=len(s)) 
+  ...
+The assignment operator for strings copies the string. You can use the & operator to concatenate（连结） strings and add to append to a string.
+
+对于字符串的赋值操作是用来复制字符串。你可以使用&操作符用来连结字符串以及add添加字符串。
+
+Strings are compared by their lexicographical（词典编撰的） order. All comparison operators are available. Per convention, all strings are UTF-8 strings, but this is not enforced. For example, when reading strings from binary files, they are merely a sequence of bytes. The index operation s[i] means the i-th char of s, not the i-th unichar.（注：unichar是两字节长的char，代表unicode的一个字符）
+
+字符串是按字典序进行比较的。所有的比较操作符都是可以使用的。按照规定，所有的字符串都是UTF-8字符串，但这不是强制的。例如，当从二进制文件读取字符串的时候，它们仅仅是一个字节序列。这个s[i]下标操作意味着字符串s的第i个字节，不是第i个字符。
+
+String variables are initialized with a special value, called nil. However, most string operations cannot deal with nil (leading to an exception being raised) for performance reasons. One should use empty strings "" rather than nil as the empty value. But "" often creates a string object on the heap, so there is a trade-off to be made here.
+
+字符串变量用一个特殊的值进行初始化，叫做nil。然而，大多数字符串操作不能处理nil（引起产生一个异常）由于性能的原因。你可以用空字符串""而不是nil作为这个空值。但是""经常在堆中创建一个字符串对象，所以在这里要做个权衡。
+
+Integers
+
+Nim has these integer types built-in: int int8 int16 int32 int64 uint uint8 uint16 uint32 uint64.
+
+nim有这些内置的整形类型：int int8 int16 int32 int64 uint uint8 uint16 uint32 uint64。
+
+The default integer type is int. Integer literals can have a type suffix to mark them to be of another integer type:
+
+默认的整形类型是int。整形常量可以有一个类型后缀来标记它们成为另外一种整形类型：
+
+let
+  x = 0          # x is of type ``int``
+  y = 0'i8       # y is of type ``int8``
+  z = 0'i64      # z is of type ``int64``
+  u = 0'u        # u is of type ``uint``
+
+Most often integers are used for counting objects that reside in memory, so int has the same size as a pointer.
+
+经常整形被用来计数，对象驻留在内存中，所以整形作为一个指针有相同的大小。
+
+The common operators + - * div mod < <= == != > >= are defined for integers. The and or xor not operators are defined for integers too and provide bitwise operations. Left bit shifting（移位，转移） is done with the shl, right shifting with the shr operator. Bit shifting operators always treat their arguments as unsigned. For arithmetic bit shifts ordinary multiplication or division can be used.
+
+常见的操作符+ - * div mod < <= == != > >=都为整形定义。and，or，xor，not操作符也为整形定义并且提供按位操作。左移位用shl操作，右移位用shr操作。移位操作经常处理它们的参数作为无符号数。通常的乘法或者除法可以实现算术移位。
+
+Unsigned operations all wrap around; they cannot lead to over- or underflow errors.
+
+无符号操作所有环绕，它们不能导致overflow（上溢）或者underflow（下溢）错误。
+
+Automatic type conversion is performed in expressions where different kinds of integer types are used. However, if the type conversion loses information, the EOutOfRange exception is raised (if the error cannot be detected at compile time).
+
+自动类型转换在表达中使用不同的整形类型时将会执行。然而，如果类型转换丢失信息，就会抛出EOutOfRange异常（如果这个错误无法在编译时检测）
+
+Floats
+
+Nim has these floating point types built-in: float float32 float64.
+
+nim有这些内置的float类型：float float32 float64。
+
+The default float type is float. In the current implementation, float is always 64 bit wide.
+
+默认的float类型是float。在当前的实现中，float总是64位范围。
+
+Float literals can have a type suffix to mark them to be of another float type:
+
+float常量可以有一个类型后缀将它们标记成为另一种float类型：
+
+var
+  x = 0.0                        # x is of type ``float``
+  y = 0.0'f32                    # y is of type ``float32``
+  z = 0.0'f64                    # z is of type ``float64``
+
+The common operators + - * / < <= == != > >= are defined for floats and follow the IEEE standard.
+
+通常的操作符+ - * / < <= == != > >=已经为float定义，并且遵守IEEE规范
+
+Automatic type conversion in expressions with different kinds of floating point types is performed: the smaller type is converted to the larger. Integer types are not converted to floating point types automatically and vice versa. The toInt and toFloat procs can be used for these conversions.
+
+在表达式中用不同的float类型将执行自动类型转换：较小的类型转换成更大的类型。整形不能自动的转换为float类型，反之亦然。toInt和toFloat过程可以用于这些转换。
+
+Type Conversion
+
+Conversion between basic types in nim is performed by using the type as a function:
+
+在nim中的基本类型转换是通过用类型作为一个函数执行的：
+
+var
+  x: int32 = 1.int32                 		# same as calling int32(1)
+  y: int8  = int8('a')               		# 'a' == 97'i8
+  z: float = 2.5                     		#int(2.5) rounds down to 2
+  sum: int = int(x) + int(y) + int(z)           # sum == 100
+
+Internal（内在的，内部的） type representation（代表，表示法）
+
+As mentioned earlier, the built-in $ (stringify) operator turns any basic type into a string, which you can then print to the screen with the echo proc. However, advanced types, or types you may define yourself won't work with the $ operator until you define one for them. Sometimes you just want to debug the current value of a complex type without having to write its $ operator. You can use then the repr proc which works with any type and even complex data graphs with cycles. The following example shows that even for basic types there is a difference between the $ and repr outputs:
+
+如前面所提到的，内置的$操作符可以将任意类型的基本类型转化为一个字符串型，然后你可以用echo过程将它们打印输出到屏幕。然而，高级类型或者你自己定义的类型不会与$操作符工作，直到你为它们定义了$操作符。有时，你仅仅想调试一个复杂类型的当前值而不必写其$运算符。你可以使用rper过程，它有效于任何类型甚至是带有周期的复杂数据图。下面的例子展示了，即使对于基本类型在$和repr之间也存在不一样的输出。
+
+var
+  myBool = true
+  myCharacter = 'n'
+  myString = "nim"
+  myInteger = 42
+  myFloat = 3.14
+echo($myBool, ":", repr(myBool))
+# --> true:true
+echo($myCharacter, ":", repr(myCharacter))
+# --> n:'n'
+echo($myString, ":", repr(myString))
+# --> nim:0x10fa8c050"nim"
+echo($myInteger, ":", repr(myInteger))
+# --> 42:42
+echo($myFloat, ":", repr(myFloat))
+# --> 3.1400000000000001e+00:3.1400000000000001e+00
+# 3.14:3.14 
+注：实际程序的运行结果跟注释的不一样
+
+Advanced types
+
+In Nim new types can be defined within a type statement:
+
+在nim中新类型可以在一个type语句中定义：
+
+type
+  biggestInt = int64      # biggest integer type that is available
+  biggestFloat = float64  # biggest float type that is available
+
+Enumeration and object types cannot be defined on the fly, but only within a type statement.
+
+枚举和对象类型不能在飞行中定义，只能在一个type语句中定义。
+
+Enumerations
+
+A variable of an enumeration type can only be assigned a value of a limited set. This set consists of ordered symbols. Each symbol is mapped to an integer value internally. The first symbol is represented at runtime by 0, the second by 1 and so on. Example:
+
+一个枚举类型变量只能被赋值一个有限的集合。这个集合有有序的符号组成。每个符号内部的映射到一个整数值。第一个符号在运行时用0表示，第二个用1表示等等。例子
+
+type
+  Direction = enum
+    north, east, south, west
+
+var x = south      # `x` is of type `Direction`; its value is `south`
+echo($x)           # writes "south" to `stdout`
+
+All comparison operators can be used with enumeration types.
+
+所有的比较运算符都可以用枚举类型
+
+An enumeration's symbol can be qualified（合格的，有资格的） to avoid ambiguities（歧义）: Direction.south.
+
+一个枚举符号可以避免歧义：Direction.south。
+
+The $ operator can convert any enumeration value to its name, the ord proc to its underlying integer value.
+
+$操作符可以将任何枚举类型的值转换为它的名字，ord过程转化为它们基本的整数值。
+
+For better interfacing to other programming languages, the symbols of enum types can be assigned an explicit ordinal value. However, the ordinal values have to be in ascending order. A symbol whose ordinal value is not explicitly given is assigned the value of the previous symbol + 1.
+
+为了更好的连接到其他语言中，枚举类型符号可以被赋值一个明确的序号值。然而，这个序号值必须是升序类型。一个符号的有序值没有明确的给出将会被赋值为前一个符号值+1.
+
+An explicit ordered enum can have holes：
+一个明确的有序枚举可以有孔  （注：一个明确的符号值可以不是连续的值）
+
+type
+  MyEnum = enum
+    a = 2, b = 4, c = 89
+
+Ordinal types
+
+Enumerations without holes, integer types, char and bool (and subranges) are called ordinal types. Ordinal types have quite a few special operations:
+
+连续的枚举类型，整形，字符，以及布尔类型（和子类型）称作序数类型。序数类型有相当多的特殊操作：
+
+Operation	     Comment
+ord(x)	    returns the integer value that is used to represent x's value   
+               	返回整形值用于表示x的值
+inc(x)	    increments x by one                                             
+              		x的值+1
+inc(x, n)	    increments x by n; n is an integer                              
+              		x的值+n，n为整数
+dec(x)	    decrements x by one                                             
+              		x的值-1
+dec(x, n)	    decrements x by n; n is an integer                             
+             		x的值-n，n为整数
+succ(x)	    returns the successor（继承人） of x                             
+              		返回x的下一个值   
+succ(x, n)    returns the n'th successor of x                                  
+　　　返回x后的第n个值
+pred(x)	    returns the predecessor（前辈） of x                             
+　　　返回x的前一个值
+pred(x, n)    returns the n'th predecessor of x                               
+　　　返回x的第前n个值
+
+The inc, dec, succ and pred operations can fail by raising an EOutOfRange or EOverflow exception. (If the code has been compiled with the proper runtime checks turned on.) 
+
+inc,dec,succ,pred操作会失败通过产生EOutOfRange(越界)，EOverflow（溢出）异常。（如果代码已经有适当的运行时检查编译打开）
+
+Subranges
+
+A subrange type is a range of values from an integer or enumeration type (the base type). Example:
+
+子类型是整形或者枚举类型（基本类型）的范围值。例如：
+
+type
+  Subrange = range[0..5]
+
+Subrange is a subrange of int which can only hold the values 0 to 5. Assigning any other value to a variable of type Subrange is a compile-time or runtime error. Assignments from the base type to one of its subrange types (and vice versa) are allowed.
+
+Subrange是一个int的子类型，它只能有0到5的值。给Subrange子类型变量赋任何值都会出现编译或运行时错误。从基本类型给它的一个子类型赋值是允许的（反之亦然）。
+
+The system module defines the important Natural type as range[0..high(int)] (high returns the maximal value). Other programming languages mandate（授权，托管，批准） the usage of unsigned integers for natural numbers. This is often wrong: you don't want unsigned arithmetic (which wraps around) just because the numbers cannot be negative. Nim's Natural type helps to avoid this common programming error.
+
+系统模型定义了重要的自然类型范围[0...high(int)](high返回最大值)。其他编程语言授权自然类型使用无符号数。这通常是错误的：你不想无符号计算仅仅是因为这个数不能为负。nim的自然类型帮助避免这种常见的编程错误。
+
+Sets
+
+The set type models the mathematical notion of a set. The set's basetype（基类型） can only be an ordinal type. The reason is that sets are implemented（执行，使实现） as high performance bit vectors（向量）.
+
+集合类型是一个集合的数学概念。集合的基类型只能是序数类型。原因是集合是作为高性能的位向量实现。
+
+Sets can be constructed via（经过，通过） the set constructor（构造器）: {} is the empty set. The empty set is type compatible（兼容的，相容的，和谐的） with any concrete set type. The constructor can also be used to include elements (and ranges of elements):
+
+集合可以通过集合构造器来构造：{}是空集合。空集合与任何具体的集合类型是类型兼容的。构造器也可以用于包含元素（和元素的范围）。
+
+type
+  CharSet = set[char]
+var
+  x: CharSet
+x = {'a'..'z', '0'..'9'} # This constructs a set that contains the
+                         # letters from 'a' to 'z' and the digits
+                         # from '0' to '9'
+
+
+These operations are supported by sets:
+
+下面是集合类型支持的操作
+
+operation	         meaning
+A + B	                 union of two sets       连接两个集合
+A * B	                 intersection（交集） of two sets    两个集合的交集
+A - B	                 difference of two sets (A without B's elements) 两个集合的差集
+A == B	                 set equality                                    集合相等
+A <= B	                 subset relation (A is subset of B or equal to B) 子集关系（A是B的子集或者与B相等）
+A < B	                 strong subset relation (A is a real subset of B) 强子集关系（A是B的一个真正的子集）
+e in A	                 set membership（集合成员） (A contains element e)  
+e notin A	         A does not contain element e                     A不包含元素e
+contains(A, e)	         A contains element e                             A包含元素e
+card(A)	                 the cardinality（集合的势） of A (number of elements in A)   A集合的势（A中包含的元素个数）
+incl(A, elem)	         same as A = A + {elem}    A中添加一个元素
+excl(A, elem)	         same as A = A - {elem}    A中减少一个元素
+
+Sets are often used to define a type for the flags of a procedure. This is a much cleaner (and type safe) solution than just defining integer constants that should be or'ed together.
+
+集合通常用于在一个过程中定义一个flags类型。这是一个非常清楚（和类型安全）解决方法相比于仅仅定义整形常量that should be or'ed together。
+
+Arrays
+
+An array is a simple fixed length container. Each element in the array has the same type. The array's index type can be any ordinal type.
+
+一个数组是一种简单的固定长度的容器。数组中的每个元素具有相同的类型。数组的索引类型可以是任何序数类型。
+
+Arrays can be constructed via []:
+
+数组可以通过[]构造：
+
+type
+  IntArray = array[0..5, int] # an array that is indexed with 0..5
+var
+  x: IntArray
+x = [1, 2, 3, 4, 5, 6]
+for i in low(x)..high(x):
+  echo(x[i])
+
+The notation x[i] is used to access the i-th element of x. Array access is always bounds checked (at compile-time or at runtime). These checks can be disabled via pragmas or invoking the compiler with the --bound_checks:off command line switch.
+
+标记x[i]是用来访问x的第i个元素。数组访问总是进行边界检查（在编译或者运行时）。这些检查可以禁用通过编译或调用编译器的命令行开关——bound_checks：off command line switch
+
+Arrays are value types, like any other Nim type. The assignment operator copies the whole array contents.
+
+数组是值类型，像其他nim类型，赋值操作将复制整个数组内容
+
+The built-in len proc returns the array's length. low(a) returns the lowest valid index for the array a and high(a) the highest valid index.
+
+内置的len过程返回数组的长度。low(a)返回数组最小有效下标，high(a)返回数组最大有效下标。
+
+type
+  Direction = enum
+    north, east, south, west
+  BlinkLights = enum
+    off, on, slowBlink, mediumBlink, fastBlink
+  LevelSetting = array[north..west, BlinkLights]
+var
+  level: LevelSetting
+level[north] = on
+level[south] = slowBlink
+level[east] = fastBlink
+echo repr(level)  # --> [on, fastBlink, slowBlink, off]
+echo low(level)   # --> north
+echo len(level)   # --> 4
+echo high(level)  # --> west
+
+The syntax（句法，语法） for nested（嵌套的） arrays (multidimensional 多面的，多维的) in other languages is a matter of appending more brackets because usually each dimension is restricted to the same index type as the others. In Nim you can have different dimensions(（数）次元，度，维) with different index types, so the nesting syntax is slightly different. Building on the previous example where a level is defined as an array of enums indexed by yet another enum, we can add the following lines to add a light tower subdivided in height levels accessed through their integer index:
+
+嵌套的数组语法在其他语言中是附加更多的括号，因为通常每个维度与其他限制相同的索引类型。在nim中你可以有不同的维度带有不同的索引类型，所以嵌套语法有些不一样。在前面的例子中，一个level被定义为一个数组枚举索引通过另一个枚举类型。我们可以添加以下的代码增加一个light tower类型在高度细分通过访问它们的整形索引：
+
+type
+  LightTower = array[1..10, LevelSetting]
+var
+  tower: LightTower
+tower[1][north] = slowBlink
+tower[1][east] = mediumBlink
+echo len(tower)     # --> 10
+echo len(tower[1])  # --> 4
+echo repr(tower)    # --> [[slowBlink, mediumBlink, ...more output..
+# The following lines don't compile due to type mismatch errors
+#tower[north][east] = on
+#tower[0][1] = on
+
+Note how the built-in len proc returns only the array's first dimension length. Another way of defining the LightTower to show better its nested nature would be to omit the previous definition of the LevelSetting type and instead write it embedded directly as the type of the first dimension:
+
+注意：内置的built-in过程仅仅只返回数组的第一维的长度。另一种方式定义LightTower表现出更好的嵌套性质，将省略前面的LevelSetting类型的定义，相反将它直接嵌入作为第一维度的类型：
+
+type
+  LightTower = array[1..10, array[north..west, BlinkLights]]
+
+It is quite frequent to have arrays start at zero, so there's a shortcut（洁净，近路） syntax to specify a range from zero to the specified index minus one:
+
+这是相当常见的有数组从0开始，所以这是一个快捷的语法，指定一个范围从0到指定的下标值减一：
+
+type
+  IntArray = array[0..5, int] # an array that is indexed with 0..5
+  QuickArray = array[6, int]  # an array that is indexed with 0..5
+var
+  x: IntArray
+  y: QuickArray
+x = [1, 2, 3, 4, 5, 6]
+y = x
+for i in low(x)..high(x):
+  echo(x[i], y[i])
+
+
+Sequences
+
+Sequences are similar to arrays but of dynamic length which may change during runtime (like strings). Since sequences are resizable（可变尺寸的） they are always allocated on the heap and garbage collected.
+
+序列类似与数组，但它有动态长度可以在运行时改变（就像字符串）。由于序列是可变大小的，所以它们总是在堆上分配以及垃圾收集。
+
+Sequences are always indexed with an int starting at position 0. The len, low and high operations are available for sequences too. The notation x[i] can be used to access the i-th element of x.
+
+序列总是带有一个int类型索引从0位置开始。len，low，high操作同样作用于序列。x[i]符号可以用于访问x的第i个元素。
+
+Sequences can be constructed by the array constructor [] in conjunction(结合，) with the array to sequence operator @. Another way to allocate space for a sequence is to call the built-in newSeq procedure.
+
+序列可以通过数组构造器[]结合数组序列操作符@来构造。另一种为序列分配空间的方法是调用内置的newSeq过程。
+
+A sequence may be passed to an openarray parameter.
+
+一个序列可以被传递到一个openarray参数。
+
+Example:
+
+var
+  x: seq[int] # a sequence of integers
+x = @[1, 2, 3, 4, 5, 6] # the @ turns the array into a sequence
+
+注：我把=@写到一块时出现了Error: undeclared identifier: '=@'这样的错误，为什么？？？
+
+Sequence variables are initialized with nil. However, most sequence operations cannot deal with nil (leading to an exception being raised) for performance reasons. Thus one should use empty sequences @[] rather than nil as the empty value. But @[] creates a sequence object on the heap, so there is a trade-off to be made here.
+
+序列变量用nil初始化。然而，由于性能的原因很多的序列操作不能处理nil（导致引发一个异常）。因此应该用空序列@[]而不是nil作为空值。但是@[]在堆上创建了一个序列对象，所以在这里需要做一个权衡  
+
+The for statement can be used with one or two variables when used with a sequence. When you use the one variable form, the variable will hold the value provided by the sequence. The for statement is looping over the results from the items() iterator from the system module. But if you use the two variable form, the first variable will hold the index position and the second variable will hold the value. Here the for statement is looping over the results from the pairs() iterator from the system module. Examples:
+
+for语句可以使用一个或两个变量当用于一个序列的时候。当你使用一个变量的形式，这个变量将会持有序列提供的值。for语句从系统模型的items()迭代器循环这个结果。但是如果你使用两个变量的形式，第一个变量将保存索引位置，第二个变量将保存值，第二种形式for语句是从系统模型的pairs()迭代器循环结果。
+
+for i in @[3, 4, 5]:
+  echo($i)
+# --> 3
+# --> 4
+# --> 5
+
+for i, value in @[3, 4, 5]:
+  echo("index: ", $i, ", value:", $value)
+# --> index: 0, value:3
+# --> index: 1, value:4
+# --> index: 2, value:5
+
+
+Open arrays
+
+Note: Openarrays can only be used for parameters.
+
+注意：Openarrays只能用于参数。
+
+Often fixed size arrays turn out to be too inflexible; procedures should be able to deal with arrays of different sizes. The openarray type allows this. Openarrays are always indexed with an int starting at position 0. The len, low and high operations are available for open arrays too. Any array with a compatible base type can be passed to an openarray parameter, the index type does not matter.
+
+通常固定大小的数组被证明会过于呆板；过程应该能够处理不同大小的数组。openarray类型允许这样。Openarray总是有一个int型索引从位置0开始。len，low，high操作同样适用于open arrays。任何带有兼容基类型的数组都可以被传递到一个openarray参数，索引类型并不重要。
+
+The openarray type cannot be nested: multidimensional openarrays are not supported because this is seldom needed and cannot be done efficiently.
+
+openarray类型不能被嵌套：多维的openarray不被支持因为这很少用到以及它不能有效的进行。
+
+Varargs
+
+A varargs parameter(交互参数) (可变参数）？？？is like an openarray parameter. However, it is also a means to implement passing a variable number of arguments to a procedure. The compiler converts the list of arguments to an array automatically:
+
+一个可变参数就像是一个openarray参数。然而，它也是一种方式实现传递可变的参数个数给一个过程。编译器自动的为一个数组转变参数列表。
+
+proc myWriteln(f: File, a: varargs[string]) =
+  for s in items(a):
+    write(f, s)
+  write(f, "\n")
+
+myWriteln(stdout, "abc", "def", "xyz")
+# is transformed by the compiler to:
+myWriteln(stdout, ["abc", "def", "xyz"])
+
+This transformation is only done if the varargs parameter is the last parameter in the procedure header. It is also possible to perform type conversions in this context:
+
+如果变参数在程序头中是最后一个参数这个转变才会发生。它也可能在这样的背景下执行类型转换：
+
+proc myWriteln(f: File, a: varargs[string, `$`]) =
+  for s in items(a):
+    write(f, s)
+  write(f, "\n")
+
+myWriteln(stdout, 123, "abc", 4.0)
+# is transformed by the compiler to:
+myWriteln(stdout, [$123, $"def", $4.0])
+
+
+In this example $ is applied to any argument that is passed to the parameter a. Note that $ applied to strings is a nop.
+
+在这个例子中$应用于任何参数，它被传递给参数a。注意：$引用于字符串是一个nop。
+
+Slices
+
+Slices look similar to subranges types in syntax but are used in a different context. A slice is just an object of type Slice which contains two bounds, a and b. By itself a slice is not very useful, but other collection types define operators which accept Slice objects to define ranges.
+
+片段在语法中类似与子界类型，但是它用于一个不同的背景下。一个片段仅仅是一个类型对象，它包含两个边界，a和b。一个片段本身不是非常有用，但是其他的集合类型定义操作接受片段对象定义范围。
+
+var
+  a = "Nim is a progamming language"
+  b = "Slices are useless."
+
+echo a[7..12] # --> 'a prog'
+b[11.. -2] = "useful"   (“-”号已换成”^”)
+echo b # --> 'Slices are useful.'
+
+In the previous example slices are used to modify a part of a string, and even a negative index is used. The slice's bounds can hold any value supported by their type, but it is the proc using the slice object which defines what values are accepted.
+
+在上面的例子中，片段被用于修改一个字符串的一部分，甚至使用了一个负数索引。片段边界可以容纳任何值的支持通过它们的类型，但是这是过程使用了片段对象，它定义了接受什么样的值。
+
+Tuples
+
+A tuple type defines various named fields and an order of the fields. The constructor () can be used to construct tuples. The order of the fields in the constructor must match the order in the tuple's definition. Different tuple-types are equivalent if they specify fields of the same type and of the same name in the same order.
+
+一个元组类型定义不同的命名域以及域的顺序。构造器（）可以用来构造元组。构造器中的域的顺序必须和元组定义的域的顺序一致。不同的元组类型是相同的如果它们的指定域在相同的顺序中有相同的类型以及相同的名字。
+
+The assignment operator for tuples copies each component. The notation t.field is used to access a tuple's field. Another notation is t[i] to access the i'th field. Here i needs to be a constant integer.
+
+元组的赋值操作赋值每个要素。标记t.field用于访问一个元组的部分。另一个符号是t[i]访问第i个部分。这里i需要是一个常数。
+
+type
+  Person = tuple[name: string, age: int] # type representing a person:
+                                         # a person consists of a name
+                                         # and an age
+var
+  person: Person
+person = (name: "Peter", age: 30)
+# the same, but less readable:
+person = ("Peter", 30)
+
+echo(person.name) # "Peter"
+echo(person.age)  # 30
+
+echo(person[0]) # "Peter"
+echo(person[1]) # 3
+# You don't need to declare tuples in a separate type section.    你不需要在一个单独的类型部分声明元组
+var building: tuple[street: string, number: int]
+building = ("Rue del Percebe", 13)
+echo(building.street)
+
+# The following line does not compile, they are different tuples!   下面的行不能编译，它们是不同的元组
+#person = building
+# --> Error: type mismatch: got (tuple[street: string, number: int])
+#     but expected 'Person'
+
+# The following works because the field names and types are the same.     下面的有效因为元组的域名称和类型相同
+var teacher: tuple[name: string, age: int] = ("Mark", 42)
+person = teacher
+
+Even though you don't need to declare a type for a tuple to use it, tuples created with different field names will be considered different objects despite having the same field types.
+
+即使你不需要声明一个元组使用类型，元组用不同的域名称创建将会被认为不同的对象，尽管它们有相同的字段类型。
+
+Tuples can be unpacked during variable assignment (and only then!). This can be handy（方便的，手边的） to assign directly the fields of the tuples to individually named variables. An example of this is the splitFile proc from the os module which returns the directory, name and extension of a path at the same time. For tuple unpacking to work you have to use parenthesis around the values you want to assign the unpacking to, otherwise you will be assigning the same value to all the individual variables! Example:
+
+元组可以被拆箱在变量赋值期间（and only then!）。这可以方便的直接分配元组领域的单独命名变量。这方面的一个例子是从OS模块同时返回目录，名字和一个路径的拓展名的splitfile过程。元组拆包工作要围绕你想指定的开箱的值使用括号，否则你将所有的个体变量分配相同的值！例如：
+
+import os
+
+let
+  path = "usr/local/nimc.html"
+  (dir, name, ext) = splitFile(path)
+  baddir, badname, badext = splitFile(path)
+echo dir      # outputs `usr/local`
+echo name     # outputs `nimc`
+echo ext      # outputs `.html`
+# All the following output the same line:
+# `(dir: usr/local, name: nimc, ext: .html)`
+echo baddir
+echo badname
+echo badext
+
+Tuple unpacking only works in var or let blocks. The following code won't compile:
+
+元组拆箱只工作在var或这let块。下面的代码不能编译：
+
+import os
+
+var
+  path = "usr/local/nimc.html"
+  dir, name, ext = ""
+
+(dir, name, ext) = splitFile(path)
+# --> Error: '(dir, name, ext)' cannot be assigned to
+
+Reference and pointer types
+
+References (similar to pointers in other programming languages) are a way to introduce many-to-one relationships. This means different references can point to and modify the same location in memory.
+
+引用（类似与其他编程语言中的指针）是一种介绍多对一关系的一种方法。这意味着不同的引用可以指向和修改相同的内存单元。
+
+Nim distinguishes between traced and untraced references. Untraced references are also called pointers. Traced references point to objects of a garbage collected heap, untraced references point to manually（手工的，手动的） allocated objects or to objects somewhere else in memory. Thus untraced references are unsafe. However for certain low-level operations (accessing the hardware) untraced references are unavoidable.
+
+在nim中分为追踪引用和非追踪引用（反追踪？）。非追踪引用也叫做指针。跟踪引用指向一个垃圾收集堆对象，反跟踪指向手动分配的对象或内存中其他地方的对象。因此反跟踪引用是不安全的。然而对于某些低级操作（访问硬件）反跟踪引用是不可避免的。
+
+Traced references are declared with the ref keyword, untraced references are declared with the ptr keyword.
+
+追踪引用用ref关键字声明，反追踪引用用ptr关键字声明
+
+The empty [] subscript notation can be used to derefer（提领（取出指标所指物体的内容），解参考） a reference, meaning to retrieve the item the reference points to. The . (access a tuple/object field operator) and [] (array/string/sequence index operator) operators perform implicit dereferencing operations for reference types:
+
+空[]下标符号可以用于解参考一个引用，引用指向的检索项的意义。.（访问一个元组或者对象域操作）和[]（数组/字符串/序列索引操作）操作符执行隐式解引用操作对于引用类型：
+
+type
+  Node = ref NodeObj     (???)
+  NodeObj = object
+    le, ri: PNode
+    data: int
+var
+  n: Node
+new(n)
+n.data = 9
+# no need to write n[].data; in fact n[].data is highly discouraged!   没有必要写n[].data，实际上n[].data是很不推荐的
+
+To allocate a new traced object, the built-in procedure new has to be used. To deal with untraced memory, the procedures alloc, dealloc and realloc can be used. The documentation of the system module（模块，组件） contains further information.
+
+为了创建一个新的追踪对象，内置函数new()必须被使用。为了处理反追踪内存函数alloc(),dealloc(),realloc()函数可以使用。系统模块的文档包含更多的信息。
+
+If a reference points to nothing, it has the value nil.
+
+如果一个引用指向空，它的值为nil.
+
+Procedural type？？？
+
+A procedural type is a (somewhat abstract) pointer to a procedure. nil is an allowed value for a variable of a procedural type. Nim uses procedural types to achieve functional programming techniques.
+
+一个程序类型是一个(有些抽象)程序的指针。空值是一个允许的程序类型变量的值。Nim用程序类型来实现功能编程技术
+
+Example:
+
+proc echoItem(x: int) = echo(x)
+
+proc forEach(action: proc (x: int)) =
+  const
+    data = [2, 3, 5, 7, 11]
+  for d in items(data):
+    action(d)
+
+forEach(echoItem)
+
+A subtle（微妙的，敏感的） issue with procedural types is that the calling convention（调用约定） of the procedure influences the type compatibility: procedural types are only compatible if they have the same calling convention. The different calling conventions are listed in the manual.
+
+关于程序类型的一个微妙的问题是：程序的调用约定会影响类型的兼容性。只有具有相同调用约定的程序才具有兼容性。手册中列出了调用约定的不同。
+
+Modules
+
+Nim supports splitting a program into pieces with a module concept. Each module is in its own file. Modules enable information hiding and separate compilation. A module may gain access to symbols of another module by the import statement. Only top-level symbols that are marked with an asterisk (*) are exported:   (*???)
+
+nim支持将一个程序分成若干个模块的概念。每个模块都有自己的文件。模块可以使信息隐藏和分开编辑。一个模块可以通过import语句访问另一个模块的符号。只有被星号标记的顶层符号才是出口。
+
+# Module A
+var
+  x*, y: int
+
+proc `*` *(a, b: seq[int]): seq[int] =
+  # allocate a new sequence:
+  newSeq(result, len(a))
+  # multiply two int sequences:
+  for i in 0..len(a)-1: result[i] = a[i] * b[i]
+
+when isMainModule:
+  # test the new ``*`` operator for sequences:
+  assert(@[1, 2, 3] * @[1, 2, 3] == @[1, 4, 9])
+
+The above module exports x and *, but not y.
+
+上面的模块出口是x和*,不是y。
+
+The top-level statements of a module are executed at the start of the program. This can be used to initialize complex data structures for example.
+
+一个模块的顶层语句在程序开始时执行。例如这可以用来初始化复杂的数据结构。
+
+Each module has a special magic constant isMainModule that is true if the module is compiled as the main file. This is very useful to embed tests within the module as shown by the above example.
+
+每个模块都有一个特殊的魔法常数isMainModule，如果这个模块作为主文件被编译，那么这个常数就为真。正如上面的例子所展示的这非常有用对于测试模块内嵌入。
+
+Modules that depend on each other are possible, but strongly discouraged, because then one module cannot be reused without the other.
+
+相互依存的模块是可能的，但强烈反对，因为这样没有其他模块时一个模块不能重复使用。
+
+The algorithm for compiling modules is:
+
+编译模块的算法：
+
+Compile the whole module as usual, following import statements recursively（递归的）.
+
+编译整个模块，递归的导入语句。
+
+If there is a cycle only import the already parsed symbols (that are exported); if an unknown identifier occurs then abort.
+
+如果这是一个循环只导入已经解析的符号(那是出口)；如果一个未知的标识符出现，然后终止。
+
+This is best illustrated by an example:
+
+通过一个例子这是最好的说明：
+
+# Module A
+type
+  T1* = int  # Module A exports the type ``T1``
+import B     # the compiler starts parsing B
+
+proc main() =
+  var i = p(3) # works because B has been parsed completely here
+
+main()# Module B
+import A  # A is not parsed here! Only the already known symbols
+          # of A are imported.
+
+proc p*(x: A.T1): A.T1 =
+  # this works because the compiler has already
+  # added T1 to A's interface symbol table
+  result = x + 1
+
+A symbol of a module can be qualified with the module.symbol syntax. If the symbol is ambiguous, it even has to be qualified. A symbol is ambiguous if it is defined in two (or more) different modules and both modules are imported by a third one:
+
+一个模块的符号要符合module.symbol的语法。即使一个符号是模糊的，它也必须符合modual.symbol语法。一个符号是模糊的如果它被定在了两个不同的模块中（或者更多）并且它们都被第三个模块导入。
+
+# Module A
+var x*: string# Module B
+var x*: int# Module C
+import A, B
+write(stdout, x) # error: x is ambiguous
+write(stdout, A.x) # no error: qualifier used
+
+var x = 4
+write(stdout, x) # not ambiguous: uses the module C's x
+
+But this rule does not apply to procedures or iterators. Here the overloading rules apply:
+
+但是这些规则并不适用于过程或者迭代器。这里应用重载规则：
+
+# Module A
+proc x*(a: int): string = $a# Module B
+proc x*(a: string): string = $a# Module C
+import A, B
+write(stdout, x(3))   # no error: A.x is called
+write(stdout, x(""))  # no error: B.x is called
+
+proc x*(a: int): string = nil
+write(stdout, x(3))   # ambiguous: which `x` is to call?    Call C :
+
+
+
+
+Excluding symbols
+
+The normal import statement will bring in all exported symbols. These can be limited by naming symbols which should be excluded with the except qualifier.
+
+正常情况下import语句会带来所有的输出符号。这可以被限制通过命名符号，它应该被排除用except。
+
+import mymodule except y
+
+From statement
+
+We have already seen the simple import statement that just imports all exported symbols. An alternative that only imports listed symbols is the from import statement:
+
+我们已经看到简单的impoer语句只是导入所有的输出符号。另一种可选择的方法是只导入列出的符号是from import语句。
+
+from mymodule import x, y, z
+
+The from statement can also force namespace qualification on symbols, thereby（因此，从而） making symbols available, but needing to be qualified to be used.
+
+from语句也可以在符号上强行命名空间限定，从而使符号可用，但需要有资格被使用。
+
+from mymodule import x, y, z
+
+x()           # use x without any qualification    使用a没有任何限制
+
+from mymodule import nil
+
+mymodule.x()           # must qualify x with the module name as prefix     必须修饰x用模块的名称作为前缀
+
+x()                    # using x here without qualification is a compile error    在这里使用x没有任何资格是一个编译错误
+
+Since module names are generally long to be descriptive, you can also define a shorter alias to use when qualifying symbols
+
+由于模块的名称一般都是很长的描述，你也可以定义一个较短的别名使用当使用限定符号的时候。
+
+from mymodule as m import nil
+
+m.x()         # m is aliasing mymodule
+
+Include statement
+
+The include statement does something fundamentally different than importing a module: it merely includes the contents of a file. The include statement is useful to split up a large module into several files:
+
+include语句与导入一个模块有一些根本上的不同：include仅仅包含一个文件的内容，include语句将一个大的模块分割成几个文件是有用的。
+
+include fileA, fileB, fileC        (???)
+
+Part 2
+
+So, now that we are done with the basics, let's see what Nim offers apart from a nice syntax for procedural programming: Part II
+
+所以，既然我们已经完成了基础，让我们看看除了关于程序编程的一个好的语法之外nim提供了什么：第二部分
+
+
+
+
+   

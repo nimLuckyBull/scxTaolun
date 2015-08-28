@@ -1,0 +1,879 @@
+Nim Tutorial (Part II)
+
+Author:	Andreas Rumpf
+Version:	0.11.0
+
+
+Introduction
+
+前言
+
+"Repetition renders the ridiculous reasonable." -- Norman Wildberger
+
+“重复使荒谬的合理。”--Norman Wildberger
+
+This document is a tutorial for the advanced constructs of the Nim programming language. Note that this document is somewhat obsolete as the manual contains many more examples of the advanced language features.
+
+这个文件是Nim编程语言构建的一个高级教程。请注意，这个文档作为手册是有些过时的，但是它包含很多具有高级编程语言特征的例子。
+
+Pragmas
+
+编译指示
+
+Pragmas are Nim's method to give the compiler additional information/ commands without introducing a massive number of new keywords. Pragmas are enclosed in the special {. and .} curly dot brackets. This tutorial does not cover pragmas. See the manual or user guide for a description of the available pragmas.
+
+编译指示是nim的方法给编译器附加的信息或者命令没有引入大量的新关键字。编译指示是用特殊的点和大括号{. 和 .}括起来的。这个教程不包括编译指示。看手册（注：Manual）或用户指南描述了可用的编译指示。
+
+Object Oriented Programming
+
+面向对象编程(OOP)
+
+While Nim's support for object oriented programming (OOP) is minimalistic（简约的，最低纲领，极保守行动）, powerful OOP techniques can be used. OOP is seen as one way to design a program, not the only way. Often a procedural approach leads to simpler and more efficient code. In particular, prefering composition over inheritance is often the better design.
+
+nim支持面向对象编程（OOP）是极保守行动，可以使用功能强大的面向对象技术。面向对象的程序设计是设计一个程序的一种方式，并不是唯一的方法。通常一个程序的方法将产生更简单和高效的代码。特别地，相比继承，组合往往是更好的设计。
+
+Objects
+
+Like tuples, objects are a means to pack different values together in a structured way. However, objects provide many features that tuples do not: They provide inheritance and information hiding. Because objects encapsulate（封装） data, the T() object constructor should only be used internally and the programmer should provide a proc to initialize the object (this is called a constructor).
+
+就像元组，对象是一种手段以一种结构化的方式将不同的值包装在一起。对象提供了很多元组没有的功能。对象提供继承和信息隐藏。由于对象封装数据，T()对象构造器应该只用于内部，程序应该提供一个过程用于初始化对象（这被叫做构造器）。
+
+Objects have access to their type at runtime. There is an of operator that can be used to check the object's type:
+
+对象在运行时访问他们的类型。of操作符，可以用来检查对象的类型：
+
+type
+  Person = object of RootObj
+    name*: string  # the * means that `name` is accessible from other modules
+    age: int       # no * means that the field is hidden from other modules
+  
+  Student = object of Person # Student inherits from Person
+    id: int                  # with an id field
+
+var
+  student: Student
+  person: Person
+assert(student of Student) # is true
+# object construction:
+student = Student(name: "Anton", age: 5, id: 2)
+
+Object fields that should be visible from outside the defining module have to be marked by *. In contrast to(相比之下) tuples, different object types are never equivalent. New object types can only be defined within a type section.
+
+从外部特定的模块可以访问到的对象域必须用*标记。相比之下，元组的不同的对象类型从来是不等价的。新的对象类型只能在type部分定义。
+
+Inheritance is done with the object of syntax. Multiple inheritance is currently not supported. If an object type has no suitable ancestor, RootObj can be used as its ancestor, but this is only a convention. Objects that have no ancestor are implicitly final. You can use the inheritable pragma（可继承的程序） to introduce new object roots apart from system.RootObj. (This is used in the GTK wrapper for instance.)
+
+继承是处理对象的语法。现在还不支持多继承。如果一个对象类型没有合适的祖先，RootObj可以作为它的祖先，但这只是一个约定。没有祖先的对象是隐藏的final。你可以用inheritable编译指示来产生一个除了来自system.RotObj之外的的根对象。（例如：这被用在GTK包）。
+
+Ref objects should be used whenever inheritance is used. It isn't strictly necessary, but with non-ref objects assignments such as let person: Person = Student(id: 123) will truncate（截面的； 截头的； 缩短了的； 截去顶端或末端） subclass fields.
+
+每当使用继承时应使用ref对象。它不是绝对必要的，但是用non-ref对象赋值，如：let person: Person = Student(id: 123)将截断子类域。
+
+Note: Composition (has-a relation) is often preferable to inheritance (is-a relation) for simple code reuse. Since objects are value types in Nim, composition is as efficient as inheritance.
+
+注意：组合(has-a 关系)往往优于继承（is-a 关系）为了简单的代码重用。由于在nim中对象是一种值类型，组合和继承一样有效。注：（引用类型（重量级对象）和值类型（轻量级对象））
+
+Mutually recursive types
+
+相互递归
+
+Objects, tuples and references can model quite complex data structures which depend on each other; they are mutually recursive. In Nim these types can only be declared within a single type section. (Anything else would require arbitrary symbol lookahead which slows down compilation.)
+
+对象，元组和引用可以塑造相当复杂的数据结构相互依赖彼此；它们是相互递归。在nim中这些类型只能在一个单一的类型部分声明。（其他任何需要任意前端符号会减慢编辑。）
+
+Example:
+
+type
+  Node = ref NodeObj # a traced reference to a NodeObj        一个对象的跟踪引用
+  NodeObj = object
+    le, ri: Node     # left and right subtrees
+    sym: ref Sym     # leaves contain a reference to a Sym
+  
+  Sym = object       # a symbol
+    name: string     # the symbol's name
+    line: int        # the line the symbol was declared in     符号声明的行
+    code: PNode      # the symbol's abstract syntax tree       符号的抽象语法树
+
+Type conversions
+
+Nim distinguishes between type casts and type conversions. Casts are done with the cast operator and force the compiler to interpret a bit pattern to be of another type.
+
+nim区分显示的类型转换和隐式的类型。显示的类型转换用casts操作符并且强制编译器解释一种位模式成为另一种类型。  注：关于类型转换另见文件  类型转换
+
+Type conversions are a much more polite way to convert a type into another: They preserve the abstract value, not necessarily the bit-pattern. If a type conversion is not possible, the compiler complains or an exception is raised.
+
+隐式的类型转换是一个更礼貌的方式将一个类型型转换为另一个：他们保存摘要值，不一定是位模式。如果一个类型转换是不可能的，编译器控诉或者抛出一个异常。
+
+The syntax for type conversions is destination_type(expression_to_convert) (like an ordinary call):
+
+类型转换语法是：目的类型（要转换的表达式）（像一个普通的调用）
+
+proc getID(x: Person): int =
+  Student(x).id
+
+The InvalidObjectConversionError exception is raised if x is not a Student.
+
+如果x不是一个Student类型，会抛出InvalidObjectConversionError异常。
+
+Object variants
+
+Often an object hierarchy is overkill in certain situations where simple variant types are needed.
+
+通常一个对象层次结构在特定的情况下是不必要的，需要简单的变体类型。
+
+An example:
+
+# This is an example how an abstract syntax tree could be modeled in Nim             这是一个例子怎样在nim中模型化一个抽象语法树
+type
+  NodeKind = enum  # the different node types
+    nkInt,          # a leaf with an integer value
+    nkFloat,        # a leaf with a float value
+    nkString,       # a leaf with a string value
+    nkAdd,          # an addition
+    nkSub,          # a subtraction
+    nkIf            # an if statement
+  Node = ref NodeObj
+  NodeObj = object
+    case kind: NodeKind  # the ``kind`` field is the discriminator（鉴别器，辨别者）
+    of nkInt: intVal: int
+    of nkFloat: floatVal: float
+    of nkString: strVal: string
+    of nkAdd, nkSub:
+      leftOp, rightOp: PNode
+    of nkIf:
+      condition, thenPart, elsePart: PNode
+
+var n = PNode(kind: nkFloat, floatVal: 1.0)
+# the following statement raises an `FieldError` exception, because
+# n.kind's value does not fit:
+n.strVal = ""
+
+As can been seen from the example, an advantage to an object hierarchy is that no conversion between different object types is needed. Yet, access to invalid object fields raises an exception.
+
+可以从这个例子中看到，一个对象层次结构的一个优点是，不需要不同的对象类型之间的转换。然而，访问无效的对象域会引发一个异常。
+
+
+Methods
+
+In ordinary object oriented languages, procedures (also called methods) are bound to a class. This has disadvantages:
+
+在普遍的面向对象程序设计语言中，过程（也叫做方法）被绑定到一个类。这种做法有缺点：
+
+Adding a method to a class the programmer has no control over is impossible or needs ugly workarounds.
+
+程序员无法控制添加一个方法到一个类中是不可能的或者需要丑陋的解决方法。
+
+Often it is unclear where the method should belong to: is join a string method or an array method?
+
+很多情况下方法应该属于哪里是不清楚的：是加入一个字符串方法还是一个数组方法？
+
+Nim avoids these problems by not assigning methods to a class. All methods in Nim are multi-methods. As we will see later, multi-methods are distinguished from procs only for dynamic binding purposes.
+
+nim通过不分配方法到一个类中避免了这样的问题。所有的方法在nim中都是多方法。后面我们将看到，多方法区别与过程只为了动态绑定目的。
+
+Method call syntax
+
+There is a syntactic sugar for calling routines: The syntax obj.method(args) can be used instead of method(obj, args). If there are no remaining arguments, the parentheses（圆括号） can be omitted: obj.len (instead of len(obj)).
+
+对于调用例程有一个语法糖：可以用语法obj.method(args)而不是method(obj,args).如果没有剩余的参数，圆括号可以省略：obj.len(而不是len(obj))。
+
+This method call syntax is not restricted to objects, it can be used for any type:
+
+这个方法调用语法是不受对象限制的，它可以被用于任何类型。
+
+echo("abc".len)                       # is the same as echo(len("abc"))
+echo("abc".toUpper())
+echo({'a', 'b', 'c'}.card)
+stdout.writeln("Hallo")               # the same as writeln(stdout, "Hallo")
+
+(Another way to look at the method call syntax is that it provides the missing postfix notation.)
+
+（另一种方式来看待方法调用语法是它提供了缺失的后缀表示法.)
+
+So "pure object oriented（纯面向对象）" code is easy to write:
+
+所以纯面向对象代码是容易写的：
+
+import strutils
+
+stdout.writeln("Give a list of numbers (separated by spaces): ")
+stdout.write(stdin.readLine.split.map(parseInt).max.`$`)
+stdout.writeln(" is the maximum!")
+
+
+Properties
+
+As the above example shows, Nim has no need for get-properties: Ordinary get-procedures that are called with the method call syntax achieve the same. But setting a value is different; for this a special setter syntax is needed:
+
+如上面的例子所示，nim没必要get-properities(获取系统参数):通常get-procedures被称为方法调用语法实现相同的功能。但是设定的值是不一样的；对于这需要一个特殊的setter语法。
+
+type
+  Socket* = object of RootObj
+    FHost: int # cannot be accessed from the outside of the module      不能从外部的模块访问FHost；F前缀是一个约定为了避免冲突因为访问器被命名为‘host’
+               # the `F` prefix is a convention to avoid clashes since
+               # the accessors are named `host`
+
+proc `host=`*(s: var Socket, value: int) {.inline.} =
+  ## setter of hostAddr
+  s.FHost = value
+
+proc host*(s: Socket): int {.inline.} =
+  ## getter of hostAddr
+  s.FHost
+
+var
+  s: Socket
+s.host = 34  # same as `host=`(s, 34)
+(The example also shows inline procedures.)
+
+这个程序也展示了inline程序
+
+The [] array access operator can be overloaded to provide array properties:
+
+[]数组访问运算符可以重载以提供数组属性:
+
+type
+  Vector* = object
+    x, y, z: float
+
+proc `[]=`* (v: var Vector, i: int, value: float) =
+  # setter
+  case i
+  of 0: v.x = value
+  of 1: v.y = value
+  of 2: v.z = value
+  else: assert(false)
+
+proc `[]`* (v: Vector, i: int): float =
+  # getter
+  case i
+  of 0: result = v.x
+  of 1: result = v.y
+  of 2: result = v.z
+  else: assert(false)
+
+The example is silly, since a vector is better modelled by a tuple which already provides v[] access。
+
+这个例子是愚蠢的，因为一个vector通过一个元组可以更好的模拟，元组已经提供v[]访问。
+
+Dynamic dispatch
+
+Procedures always use static dispatch. For dynamic dispatch replace the proc keyword by method:
+
+程序总是使用静态调度。对于动态调度使用method代替proc关键词：
+
+type
+  PExpr = ref object of RootObj ## abstract base class for an expression
+  PLiteral = ref object of PExpr
+    x: int
+  PPlusExpr = ref object of PExpr
+    a, b: PExpr
+
+# watch out: 'eval' relies on dynamic binding
+method eval(e: PExpr): int =
+  # override this base method
+  quit "to override!"
+
+method eval(e: PLiteral): int = e.x
+method eval(e: PPlusExpr): int = eval(e.a) + eval(e.b)
+
+proc newLit(x: int): PLiteral = PLiteral(x: x)
+proc newPlus(a, b: PExpr): PPlusExpr = PPlusExpr(a: a, b: b)
+
+echo eval(newPlus(newPlus(newLit(1), newLit(2)), newLit(4)))
+
+Note that in the example the constructors newLit and newPlus are procs because it makes more sense for them to use static binding, but eval is a method because it requires dynamic binding.
+
+注意：在例子中，构造器newLit和newPlus是过程，因为对于它们使用静态绑定更有意义，但是eval是一个方法因为它需要动态绑定。
+
+In a multi-method all parameters that have an object type are used for the dispatching:
+
+在一个多方法的所有参数中有一个对象类型用于调度。
+
+type
+  Thing = object of RootObj
+  Unit = object of Thing
+    x: int
+
+method collide(a, b: Thing) {.inline.} =
+  quit "to override!"
+
+method collide(a: Thing, b: Unit) {.inline.} =
+  echo "1"
+
+method collide(a: Unit, b: Thing) {.inline.} =
+  echo "2"
+
+var
+  a, b: Unit
+collide(a, b) # output: 2
+
+As the example demonstrates, invocation of a multi-method cannot be ambiguous: Collide 2 is preferred over collide 1 because the resolution works from left to right. Thus Unit, Thing is preferred over Thing, Unit.
+
+如上面那个例子所示，调用一个多方法不能是模棱两可的。相比collide 1，collide 2是首选，因为决议是从左到右工作的。因此，Unit, Thing优于Thing, Unit。
+
+Perfomance note: Nim does not produce a virtual method table, but generates dispatch trees. This avoids the expensive indirect branch for method calls and enables inlining. However, other optimizations like compile time evaluation or dead code elimination do not work with methods.
+
+注意：nim不产生虚拟方法表，但是生成调用树。这样为方法调用和使用内联避免了多余的间接分支。然而，其他的优化像：编译时间评估或者死代码消除对于方法是不起作用的。
+
+
+Exceptions
+
+In Nim exceptions are objects. By convention, exception types are suffixed with 'Error'. The system module defines an exception hierarchy that you might want to stick to. Exceptions derive from system.Exception, which provides the common interface.
+
+在Nim中异常是对象。按照惯例，异常类型带有'Error'后缀。系统模型定义了一种异常层次结构，你要遵守。异常源自system.Exception,它提供公共的接口。
+
+Exceptions have to be allocated on the heap because their lifetime is unknown. The compiler will prevent you from raising an exception created on the stack. All raised exceptions should at least specify the reason for being raised in the msg field.
+
+异常必须在堆上分配，因为它们的生存时间不确定。编译器将阻止你在栈空间创建异常。所有引发的异常应该在msg域说明原因。
+
+A convention is that exceptions should be raised in exceptional cases: For example, if a file cannot be opened, this should not raise an exception since this is quite common (the file may not exist).
+
+一个约定是异常要在特殊的情况下才能被引发：例如，如果一个文件不能打开，这不应该引发一个异常因为这是很常见的（文件可能不存在）
+
+Raise statement
+
+Raising an exception is done with the raise statement:
+
+使用raise语句引发一个异常
+
+var
+  e: ref OSError
+new(e)
+e.msg = "the request to the OS failed"
+raise e
+
+If the raise keyword is not followed by an expression, the last exception is re-raised. For the purpose of avoiding repeating this common code pattern, the template newException in the system module can be used:
+
+如果raise关键字没有在一个异常后面，最后的异常将会被引发。为了达到避免重复公共代码模式的目的，可以使用系统模块中的模板newException:
+
+raise newException(OSError, "the request to the OS failed")
+
+
+Try statement
+
+The try statement handles exceptions:
+
+try语句处理异常
+
+# read the first two lines of a text file that should contain numbers     读取一个文本文件的前两行，它应该包含数字已经尝试添加它们
+# and tries to add them
+var
+  f: File
+if open(f, "numbers.txt"):
+  try:
+    let a = readLine(f)
+    let b = readLine(f)
+    echo "sum: ", parseInt(a) + parseInt(b)
+  except OverflowError:
+    echo "overflow!"
+  except ValueError:
+    echo "could not convert string to integer"
+  except IOError:
+    echo "IO error!"
+  except:
+    echo "Unknown exception!"
+    # reraise the unknown exception:
+    raise
+  finally:
+    close(f)
+
+The statements after the try are executed unless an exception is raised. Then the appropriate except part is executed.
+
+除非引发一个异常，try之后的语句才会执行。然后会执行except相应的部分。
+
+The empty except part is executed if there is an exception that is not explicitly listed. It is similar to an else part in if statements.
+
+如果这有一个异常没有明确的列出，将会执行空的except部分。它类似于if语句中的else部分。
+
+If there is a finally part, it is always executed after the exception handlers.
+
+如果存在finally部分，在异常处理之后它必须执行。
+
+The exception is consumed in an except part. If an exception is not handled, it is propagated through the call stack. This means that often the rest of the procedure - that is not within a finally clause - is not executed (if an exception occurs).
+
+异常是在except部分处理，如果一个异常没有处理，它是通过调用堆栈传播。那意味着通常剩下的程序-不在一个finally的部分--是不执行的（如果异常发生）
+
+If you need to access the actual exception object or message inside an except branch you can use the getCurrentException() and getCurrentExceptionMsg() procs from the system module. Example:
+
+如果你需要访问实际的异常对象或者except分支中的消息，可以使用系统模型中的getCurrentException()和getCurrentExceptionMsg()的方法
+
+try:
+  doSomethingHere()
+except:
+  let
+    e = getCurrentException()
+    msg = getCurrentExceptionMsg()
+  echo "Got exception ", repr(e), " with message ", msg
+
+Annotating procs with raised exceptions
+
+注释过程提出例外
+
+Through the use of the optional {.raises.} pragma you can specify that a proc is meant to raise a specific set of exceptions, or none at all. If the {.raises.} pragma is used, the compiler will verify that this is true. For instance, if you specify that a proc raises IOError, and at some point it (or one of the procs it calls) starts raising a new exception the compiler will prevent that proc from compiling. Usage example:
+
+尽管使用可选项{.raises.}编译注释你可以确定一个过程是为了引发一组特定的异常，或者根本什么都没有。如果使用{.raises.}编译注释，编译器会验证这是正确的。例如：如果你指定一个过程引发IOError，在某些地方它（或者是它调用的方法之一）开始引发一个新的异常，编译器将会阻止过程编译。使用示例：
+
+proc complexProc() {.raises: [IOError, ArithmeticError].} =
+  ...
+
+proc simpleProc() {.raises: [].} =
+  ...
+Once you have code like this in place, if the list of raised exception changes the compiler will stop with an error specifying the line of the proc which stopped validating the pragma and the raised exception not being caught, along with the file and line where the uncaught exception is being raised, which may help you locate the offending code which has changed.
+
+一旦你在程序中有这样的代码，如果引发异常的列表发生改变，编译器将会停止，在过程特定的地方出现一个错误，过程将停止验证语用以及不能捕获引发的异常，随着文件以及行未捕获的异常被引发，它可能帮助你找到异常改变的问题代码。
+
+If you want to add the {.raises.} pragma to existing code, the compiler can also help you. You can add the {.effects.} pragma statement to your proc and the compiler will output all inferred effects up to that point (exception tracking is part of Nim's effect system). Another more roundabout（绕圈子的，不直截了当的） way to find out the list of exceptions raised by a proc is to use the Nim doc2 command which generates documentation for a whole module and decorates all procs with the list of raised exceptions. You can read more about Nim's effect system and related pragmas in the manual.
+
+如果那你想为现有的代码添加{.raises.}编译注释，编译器也会帮组你。你可以添加{.effects.}编译注释语句都你的过程中，编译器将会输出所有已经推断的影响达到那一点（异常轨迹是nim的影响系统的一部分）。另一种间接地方法通过一个过程找到引发的异常列表是使用nim doc2命令，它为了整个模块生成文档以及用引发异常列表装饰所有的过程。你可以在手册中阅读更多关于nim的影响系统以及相关的语法。
+
+Generics
+
+Generics are Nim's means to parametrize procs, iterators or types with type parameters. They are most useful for efficient type safe containers:
+
+泛型是nim参数化过程的手段，迭代器或者类型有类型参数。他们对于有效类型安全容器是非常有用的：
+
+type
+  BinaryTreeObj[T] = object # BinaryTree is a generic type with
+                            # with generic param ``T``
+    le, ri: BinaryTree[T]   # left and right subtrees; may be nil
+    data: T                 # the data stored in a node
+  BinaryTree*[T] = ref BinaryTreeObj[T] # type that is exported
+
+proc newNode*[T](data: T): BinaryTree[T] =
+  # constructor for a node
+  new(result)
+  result.data = data
+
+proc add*[T](root: var BinaryTree[T], n: BinaryTree[T]) =
+  # insert a node into the tree
+  if root == nil:
+    root = n
+  else:
+    var it = root
+    while it != nil:
+      # compare the data items; uses the generic ``cmp`` proc
+      # that works for any type that has a ``==`` and ``<`` operator
+      var c = cmp(it.data, n.data)
+      if c < 0:
+        if it.le == nil:
+          it.le = n
+          return
+        it = it.le
+      else:
+        if it.ri == nil:
+          it.ri = n
+          return
+        it = it.ri
+
+proc add*[T](root: var BinaryTree[T], data: T) =
+  # convenience proc:
+  add(root, newNode(data))
+
+iterator preorder*[T](root: BinaryTree[T]): T =
+  # Preorder traversal of a binary tree.
+  # Since recursive iterators are not yet implemented,
+  # this uses an explicit stack (which is more efficient anyway):
+  var stack: seq[BinaryTree[T]] = @[root]
+  while stack.len > 0:
+    var n = stack.pop()
+    while n != nil:
+      yield n.data
+      add(stack, n.ri)  # push right subtree onto the stack
+      n = n.le          # and follow the left pointer
+
+var
+  root: BinaryTree[string] # instantiate a BinaryTree with ``string``
+add(root, newNode("hello")) # instantiates ``newNode`` and ``add``
+add(root, "world")          # instantiates the second ``add`` proc
+for str in preorder(root):
+  stdout.writeln(str)
+
+The example shows a generic binary tree. Depending on context, the brackets are used either to introduce type parameters or to instantiate a generic proc, iterator or type. As the example shows, generics work with overloading: the best match of add is used. The built-in add procedure for sequences is not hidden and is used in the preorder iterator.
+
+上面的例子展示了一个通用的二叉树。根据上下文，括号是用来介绍类型参数或者实例化一个通用过程，迭代器，或类型。如例子所示，泛型伴随重载：最合适的add方法被使用。内置的序列的add方法不是隐藏的，它被应用在perorder迭代器中。
+
+Templates
+
+Templates are a simple substitution mechanism（替换机制） that operates on Nim's abstract syntax trees（抽象语法树）. Templates are processed in the semantic pass of the compiler. They integrate well with the rest of the language and share none of C's preprocessor macros flaws.
+
+模版是一个简单的替换机制在nim的抽象语法树上操作。模版在编译器的语义分析阶段被处理。它和其他的语言整合的很好，分享没有c语言的预处理宏定义的缺陷。
+
+To invoke a template, call it like a procedure.
+
+调用一个模版，就像调用一个程序一样。
+
+Example:
+
+template `!=` (a, b: expr): expr =
+  # this definition exists in the System module
+  not (a == b)
+
+assert(5 != 6) # the compiler rewrites that to: assert(not (5 == 6))
+
+The !=, >, >=, in, notin, isnot operators are in fact templates: this has the benefit that if you overload the == operator, the != operator is available automatically and does the right thing. (Except for IEEE floating point numbers - NaN breaks basic boolean logic.)
+
+!=, >, >=, in, notin, isnot 操作都是模版。如果你重载==操作符这是很有益处的，！=操作符可以自动访问和做正确的事情。（除了IEEE浮点数-NaN打破基本的布尔逻辑）
+
+a > b is transformed into b < a. a in b is transformed into contains(b, a). notin and isnot have the obvious meanings.
+
+a>b被转换成b<a。a in b被转换成contains(b,a)。notin和isnot有显而易见的含义。
+
+Templates are especially useful for lazy evaluation purposes. Consider a simple proc for logging:
+
+模版对于懒惰评价的目的是非常有用的。 考虑一个简单的logging过程
+
+eg:
+const
+  debug = true
+
+proc log(msg: string) {.inline.} =
+  if debug: stdout.writeln(msg)
+
+var
+  x = 4
+log("x has the value: " & $x)
+
+This code has a shortcoming: if debug is set to false someday, the quite expensive $ and & operations are still performed! (The argument evaluation for procedures is eager).
+
+这个代码有一个缺点，如果debug被设置为false，$和&操作符依然执行。（对于过程的参数评估is eager）
+
+Turning the log proc into a template solves this problem:
+
+将log函数转换成模版解决这个问题
+
+const
+  debug = true
+
+template log(msg: string) =
+  if debug: stdout.writeln(msg)
+
+var
+  x = 4
+log("x has the value: " & $x)
+
+The parameters' types can be ordinary types or the meta types expr (stands for expression), stmt (stands for statement) or typedesc (stands for type description). If the template has no explicit return type, stmt is used for consistency with procs and methods.
+
+模版的参数类型可以是普通类型或者元类型expr(代表表达式)，stmt(代表声明)，typedesc（代表类型描述）。如果模版没有显示的返回类型，声明用于过程和方法的一致性。
+
+If there is a stmt parameter it should be the last in the template declaration. The reason is that statements can be passed to a template via a special : syntax:
+
+如果这是一个stmt参数，它应该被放到模版声明的最后面。原因是statements可以通过一个特殊的:语法传递给模版。
+
+template withFile(f: expr, filename: string, mode: FileMode,
+                  body: stmt): stmt {.immediate.} =
+  let fn = filename
+  var f: File
+  if open(f, fn, mode):
+    try:
+      body
+    finally:
+      close(f)
+  else:
+    quit("cannot open: " & fn)
+
+withFile(txt, "ttempl3.txt", fmWrite):
+  txt.writeln("line 1")
+  txt.writeln("line 2")
+
+In the example the two writeln statements are bound to the body parameter. The withFile template contains boilerplate code and helps to avoid a common bug: to forget to close the file. Note how the let fn = filename statement ensures that filename is evaluated only once.
+
+例子中的两个writeln语句被绑定到body参数。withFile样板包含的样板代码有助于避免常见的错误：忘记关闭文件。注意：let fn=filename语句如何确保文件名只被计算一次。
+
+Macros
+
+Macros enable advanced compile-time code transformations, but they cannot change Nim's syntax. However, this is no real restriction because Nim's syntax is flexible enough anyway. Macros have to be implemented in pure Nim code if the foreign function interface (FFI) is not enabled in the compiler, but other than that restriction (which at some point in the future will go away) you can write any kind of Nim code and the compiler will run it at compile time.
+
+宏使先进的编译时代码转换，但是它并不改变nim的语法。然而，这没有真正的限制，因为毕竟nim的语法是足够灵活的。宏必须在nim纯代码中实现如果外部函数接口（FFI）不在编译器中启用，但是除了那个限制（这一点在未来会消失），你可以写任何种类的nim代码，编译器将在编译的时候运行它。
+
+There are two ways to write a macro, either generating Nim source code and letting the compiler parse it, or creating manually an abstract syntax tree (AST) which you feed to the compiler. In order to build the AST one needs to know how the Nim concrete syntax is converted to an abstract syntax tree (AST). The AST is documented in the macros module.
+
+有两种方法来创建一个宏，一种：生成nim的源代码，让编译器解析它；另一种是：你为编译器手动创建一个抽象语法树（AST）。为了创建AST，需要知道Nim怎样将具体语法转换为抽象语法树（AST）。AST在宏模块记录。
+
+Once your macro is finished, there are two ways to invoke it:
+
+一旦宏创建完成，有两种方法调用它：
+
+invoking a macro like a procedure call (expression macros)
+
+像调用过程一样调用宏（如：表达宏）
+
+invoking a macro with the special macrostmt syntax (statement macros)
+
+用特殊的macrostmt语法调用宏（声明宏）
+
+
+Expression Macros
+
+
+The following example implements a powerful debug command that accepts a variable number of arguments:
+
+下面的例子实现了一个功能强大的debug命令，接受数目可变的参数：
+
+# to work with Nim syntax trees, we need an API that is defined in the
+# ``macros`` module:                                             为了使用nim语法树，我们需要一个被定义在 ``macros``模块的API
+import macros
+
+macro debug(n: varargs[expr]): stmt =
+  # `n` is a Nim AST that contains a list of expressions;        'n'是一个nim的AST包含一个表达式列表；这个宏返回一个语句列表
+  # this macro returns a list of statements:
+  result = newNimNode(nnkStmtList, n)
+  # iterate over any argument that is passed to this macro:       迭代器覆盖任何参数它被传递给这个宏
+  for i in 0..n.len-1:
+    # add a call to the statement list that writes the expression;   给语句列表添加一个调用，它写出表达式
+    # `toStrLit` converts an AST to its string representation:        `toStrLit`将一个AST转换为它的字符串表示
+    result.add(newCall("write", newIdentNode("stdout"), toStrLit(n[i])))
+    # add a call to the statement list that writes ": "                给语句列表添加一个调用，它输出":"
+    result.add(newCall("write", newIdentNode("stdout"), newStrLitNode(": ")))
+    # add a call to the statement list that writes the expressions value:   给语句列表添加一个调用，它输出表达式的值
+    result.add(newCall("writeln", newIdentNode("stdout"), n[i]))
+
+var
+  a: array[0..10, int]
+  x = "some string"
+a[0] = 42
+a[1] = 45
+
+debug(a[0], a[1], x)
+
+
+The macro call expands to:
+
+宏调用拓展
+
+write(stdout, "a[0]")
+write(stdout, ": ")
+writeln(stdout, a[0])
+
+write(stdout, "a[1]")
+write(stdout, ": ")
+writeln(stdout, a[1])
+
+write(stdout, "x")
+write(stdout, ": ")
+writeln(stdout, x)
+
+
+Statement Macros
+
+Statement macros are defined just as expression macros. However, they are invoked by an expression following a colon.
+
+声明宏的定义和表达宏一样。然而，它们通过一个表达式后跟一个冒号被调用
+
+The following example outlines a macro that generates a lexical analyzer from regular expressions:
+
+下面的示例概述，从一个正则表达式生成一个词法分析器的宏
+
+macro case_token(n: stmt): stmt =
+  # creates a lexical analyzer from regular expressions
+  # ... (implementation is an exercise for the reader :-)   从一个正规表达式构造一个语法分析器，没有实现
+  discard
+
+case_token: # this colon tells the parser（解析器） it is a macro statement             这个冒号通知解析器，这是一个宏语句
+of r"[A-Za-z_]+[A-Za-z_0-9]*":
+  return tkIdentifier
+of r"0-9+":
+  return tkInteger
+of r"[\+\-\*\?]+":
+  return tkOperator
+else:
+  return tkUnknown
+
+
+Term rewriting macros
+//项重写的宏
+Term rewriting macros can be used to enhance the compilation process with user defined optimizations; see this document for further information.
+//项重写的宏可以用来与用户定义的优化提高编译过程，看到这个文件的更多信息。
+
+Building your first macro
+
+To give a footstart to writing macros we will show now how to turn your typical dynamic code into something that compiles statically. For the exercise we will use the following snippet of code as the starting point:
+
+给一个footstart写宏，我们将展示如何将你的典型的动态代码转换为静态编译的代码，为了练习我们使用下面的代码片段作为出发点：
+
+import strutils, tables
+
+proc readCfgAtRuntime(cfgFilename: string): Table[string, string] =
+  let
+    inputString = readFile(cfgFilename)
+  var
+    source = ""
+  
+  result = initTable[string, string]()
+  for line in inputString.splitLines:    string.splitLines以（CR, LF, CR-LF）作为分割符  注CR, LF, CR-LF是不同平台上的换行符
+    # Ignore empty lines
+    if line.len < 1: continue     意味着是空串，也就是忽略空的行
+    var chunks = split(line, ',')         split(line, ',')代表以','作为分割符
+    if chunks.len != 2:
+      quit("Input needs comma split values, got: " & line)
+    result[chunks[0]] = chunks[1]
+  
+  if result.len < 1: quit("Input file empty!")
+
+let info = readCfgAtRuntime("data.cfg")
+
+when isMainModule:
+  echo info["licenseOwner"]
+  echo info["licenseKey"]
+  echo info["version"]
+
+Presumably（据推测，大概） this snippet of code could be used in a commercial software, reading a configuration file to display information about the person who bought the software. This external file would be generated by an online web shopping cart to be included along the program containing the license information：
+
+想必这段代码可以用在商业软件，读取配置文件展示买软件的人的信息。这个外部文件将通过一个网上购物车网站包含许可信息的程序生成：
+
+version,1.1
+licenseOwner,Hyori Lee
+licenseKey,M1Tl3PjBWO2CC48m
+
+The readCfgAtRuntime proc will open the given filename and return a Table from the tables module. The parsing of the file is done (without much care for handling invalid data or corner cases) using the splitLines proc from the strutils module. There are many things which can fail; mind the purpose is explaining how to make this run at compile time, not how to properly implement a DRM scheme.
+
+readCfgAtRuntime过程将打开所给的文件名以及从tables模块返回一个表格。使用strutils模块的splitLines过程解析这个文件（不要过于关心处理无效的数据或者案例）。有很多事情可能失败；在意的目的是解释如何使这个在编译的时候运行，而不是如果正确实施一个DRM方案。
+注：DRM，英文全称Digital Rights Management, 可以翻译为：内容数字版权加密保护技术。 由于数字化信息的特点决定了必须有另一种独特的技术，来加强保护这些数字化的音视频节目内容的版权，该技术就是数字权限管理技术---DRM（digital right management）。
+
+The reimplementation of this code as a compile time proc will allow us to get rid of the data.cfg file we would need to distribute along the binary, plus if the information is really constant, it doesn't make from a logical point of view to have it mutable in a global variable, it would be better if it was a constant. Finally, and likely the most valuable feature, we can implement some verification at compile time. You could think of this as a better unit testing, since it is impossible to obtain a binary unless everything is correct, preventing you to ship to users a broken program which won't start because a small critical file is missing or its contents changed by mistake to something invalid.
+
+作为一个编译时过程实现这个代码将允许我们移除data.cfg文件，我们需要沿着二进制，加上如果信息是不变的，它没有从一个逻辑角度使它在一个全局变量范围内变动，如果它是一个常数会更好。最后，可能最有价值的功能，我们可以在编译时实现一些验证。你可以将这看做是一个好的测试单元，因为除非所有的事情都是正确的，否则它不可能包含一个二进制，防止你传递给用户一个不完整的程序
+它不会启动因为一个小关键文件的丢失或者它的内容被错误的更改成一些无效的东西。
+
+Generating source code
+
+Our first attempt will start by modifying the program to generate a compile time string with the generated source code, which we then pass to the parseStmt proc from the macros module. Here is the modified source code implementing the macro:
+
+我们的第一次尝试将通过修改程序生成一个编译时字符串用源代码生成，然后我们将它从宏模块中传递到parseStmt过程。下面是修改的源代码实现宏：
+
+import macros, strutils
+
+macro readCfgAndBuildSource(cfgFilename: string): stmt =
+  let
+    inputString = slurp(cfgFilename.strVal)
+  var
+    source = ""
+  
+  for line in inputString.splitLines:
+    # Ignore empty lines
+    if line.len < 1: continue
+    var chunks = split(line, ',')
+    if chunks.len != 2:
+      error("Input needs comma split values, got: " & line)
+    source &= "const cfg" & chunks[0] & "= \"" & chunks[1] & "\"\n"
+  
+  if source.len < 1: error("Input file empty!")
+  result = parseStmt(source)
+
+readCfgAndBuildSource("data.cfg")
+
+when isMainModule:
+  echo cfglicenseOwner
+  echo cfglicenseKey
+  echo cfgversion
+
+The good news is not much has changed! First, we need to change the handling of the input parameter (line 3). In the dynamic version the readCfgAtRuntime proc receives a string parameter. However, in the macro version it is also declared as string, but this is the outside interface of the macro. When the macro is run, it actually gets a PNimNode object instead of a string, and we have to call the strVal proc (line 5) from the macros module to obtain the string being passed in to the macro.
+
+好消息是没有改变很多！首先，我们需要改变输入参数的处理(line 3)。在动态版本中readCfgAtRuntime过程接收一个string参数。然而，在宏版本中它同样是声明为string类型，但是这是宏的外部接口。当宏运行，它实际上得到一个PNimNode对象而不是一个字符串，所以我们必须从宏模块调用strVal过程（line 5）得到字符串被传递到一个宏中。
+
+Second, we cannot use the readFile proc from the system module due to FFI restriction at compile time. If we try to use this proc, or any other which depends on FFI, the compiler will error with the message cannot evaluate and a dump of the macro's source code, along with a stack trace where the compiler reached before bailing out. We can get around this limitation by using the slurp proc from the system module, which was precisely made for compilation time (just like gorge which executes an external program and captures its output).
+
+第二，我们不能使用来自系统模型的readFile过程由于在编译时外部函数接口(FFI)的限制。如果我们试图使用readFile过程，或者其他依赖于FFI的过程，编译器将会带有不同评估的错误信息以及转储宏的源代码，以及一个在救助之前编译器达到的堆栈跟踪。我们可以摆脱这个限制通过使用来自系统模型的slurp过程，它正是为编译时所准备的。（就像groge执行外部程序以及捕捉它的输出）
+
+The interesting thing is that our macro does not return a runtime Table object. Instead, it builds up Nim source code into the source variable. For each line of the configuration file a const variable will be generated (line 15). To avoid conflicts we prefix these variables with cfg. In essence, what the compiler is doing is replacing the line calling the macro with the following snippet of code:
+
+有趣的事情是我们的宏并不返回一个运行时表对象。相反，它建立了nim源代码进入source变量。对于配置文件的每一行，将会产生一个const变量（line 15）.为了避免歧义我们在这些变量的前面加上cfg前缀。编译器做的是用以下的代码片段替换调用宏的那一行。
+
+const cfgversion= "1.1"
+const cfglicenseOwner= "Hyori Lee"
+const cfglicenseKey= "M1Tl3PjBWO2CC48m"
+
+You can verify this yourself adding the line echo source somewhere at the end of the macro and compiling the program. Another difference is that instead of calling the usual quit proc to abort (which we could still call) this version calls the error proc (line 14). The error proc has the same behavior as quit but will dump also the source and file line information where the error happened, making it easier for the programmer to find where compilation failed. In this situation it would point to the line invoking the macro, but not the line of data.cfg we are processing, that's something the macro itself would need to control.
+
+你可以自己验证这个，添加echo(source)行在宏的结束然后编译程序。另一个不同是不是调用通常的quit过程来终止（我们依然可以调用），这个版本调用erroc过程（line 14）.error过程与quit过程有相同的行为，但是error过程将会转储source和文件行信息在错误发生的地方，这使得对于程序员更容易找到编译失败的地方。在这种情况下，它会指向调用宏行，而不是我们正在处理的data.cfg文件行，这是宏本身需要控制的事情。
+
+Generating AST by hand
+
+To generate an AST we would need to intimately（熟悉的，亲密的） know the structures used by the Nim compiler exposed in the macros module, which at first look seems a daunting（令人畏惧的； 使人气馁的； 令人怯步的） task. But we can use as helper shortcut the dumpTree macro, which is used as a statement macro instead of an expression macro. Since we know that we want to generate a bunch of const symbols we can create the following source file and compile it to see what the compiler expects from us:
+
+为了生成一个AST我们需要清楚的了解使用的结构通过nim编译器暴露在宏模块，起初看起来这是一个艰巨的任务。但是我们可以使用作为辅助捷径的dumpTree宏，它被作为一个声明宏而不是一个表达式宏。既然我们知道我们想生成一个const符号串，我们可以创建下面的源文件然后编译它，看看编译器从我们期望什么：
+
+import macros
+
+dumpTree:
+  const cfgversion: string = "1.1"
+  const cfglicenseOwner= "Hyori Lee"
+  const cfglicenseKey= "M1Tl3PjBWO2CC48m"
+
+During compilation of the source code we should see the following lines in the output (again, since this is a macro, compilation is enough, you don't have to run any binary):
+
+在编译源代码的期间，我们可以在输出中看到以下行（再次说明，由于这是一个宏，编译是足够的，你不需要运行任何二进制文件）
+
+StmtList
+  ConstSection
+    ConstDef
+      Ident !"cfgversion"
+      Ident !"string"
+      StrLit 1.1
+  ConstSection
+    ConstDef
+      Ident !"cfglicenseOwner"
+      Empty
+      StrLit Hyori Lee
+  ConstSection
+    ConstDef
+      Ident !"cfglicenseKey"
+      Empty
+      StrLit M1Tl3PjBWO2CC48m
+
+With this output we have a better idea of what kind of input the compiler expects. We need to generate a list of statements. For each constant the source code generates a ConstSection and a ConstDef. If we were to move all the constants to a single const block we would see only a single ConstSection with three children.
+
+有这样的输出对于编译器期望怎样的输入我们有一个更好的主意。我们需要生成一个语句列表。对于每一个恒定的源代码生成一个ConstSection和一个ConstDef。如果我们把所有恒定的部分移动到一个单const块中，我们可以看到仅仅一个单一的ConstSection带有三个孩子。
+
+Maybe you didn't notice, but in the dumpTree example the first constant explicitly specifies the type of the constant. That's why in the tree output the two last constants have their second child Empty but the first has a string identifier. So basically a const definition is made up from an identifier, optionally a type (can be an empty node) and the value. Armed with this knowledge, let's look at the finished version of the AST building macro:
+
+也许你没有注意，但是在dumpTree例子中第一个恒定式显示的限定了恒定式的类型。这是为什么在输出树中后两个恒定式它们的第二个孩子为空，但是第一个恒定式有一个string标识符。因此基本上一个常量的定义是由一个标识符，一个可选的类型（可以为空）以及值组成。有了这方面的知识，让我们看看完整版本的AST建立宏：
+
+import macros, strutils
+
+macro readCfgAndBuildAST(cfgFilename: string): stmt =
+  let
+    inputString = slurp(cfgFilename.strVal)
+  
+  result = newNimNode(nnkStmtList)
+  for line in inputString.splitLines:
+    # Ignore empty lines
+    if line.len < 1: continue
+    var chunks = split(line, ',')
+    if chunks.len != 2:
+      error("Input needs comma split values, got: " & line)
+    var
+      section = newNimNode(nnkConstSection)
+      constDef = newNimNode(nnkConstDef)
+    constDef.add(newIdentNode("cfg" & chunks[0]))
+    constDef.add(newEmptyNode())
+    constDef.add(newStrLitNode(chunks[1]))
+    section.add(constDef)
+    result.add(section)
+  
+  if result.len < 1: error("Input file empty!")
+
+readCfgAndBuildAST("data.cfg")
+
+when isMainModule:
+  echo cfglicenseOwner
+  echo cfglicenseKey
+  echo cfgversion
+
+Since we are building on the previous example generating source code, we will only mention the differences to it. Instead of creating a temporary（临时的，暂时的； 短暂的） string variable and writing into it source code as if it were written by hand, we use the result variable directly and create a statement list node (nnkStmtList) which will hold our children (line 7).
+
+既然我们是建立在前面例子生成的源代码中，我们将只提及与它不同的地方。相比创建一个临时的字符串变量以及写入它的源代码好像它是被手动写的，我们直接使用result变量以及创建一个语句列表节点（nnkStmtList）它将容纳我们的孩子（line 7）。
+
+For each input line we have to create a constant definition (nnkConstDef) and wrap it inside a constant section (nnkConstSection). Once these variables are created, we fill them hierarchichally（分等级地，分级体系地）(line 17) like the previous AST dump tree showed: the constant definition is a child of the section definition, and the constant definition has an identifier node, an empty node (we let the compiler figure out the type), and a string literal with the value.
+
+对于输入的每行我们必须创建一个常数定义（nnkConstDef）以及将它包在一个常数部分（nnkConstSection）。一旦这些变量被创建，我们分等级地填补它们就像前面的AST树展示的那样：constant定义是section定义的孩子，以及constant定义有一个标识符节点，一个空节点（我们让编译器识别类型），和带有一个字符串字面值的值。
+
+A last tip when writing a macro: if you are not sure the AST you are building looks ok, you may be tempted to use the dumpTree macro. But you can't use it inside the macro you are writting/debugging. Instead echo the string generated by treeRepr. If at the end of the this example you add echo treeRepr(result) you should get the same output as using the dumpTree macro, but of course you can call that at any point of the macro where you might be having troubles.
+
+当写一个宏的时候最后一个提示：如果你不确定你建立的AST看起来很ok，你可能会使用dumpTree宏。但是你不能在你写的或者调试的宏中使用它。相反通过treeRepr产生字符串。如果在这个例子的最后你添加echo treeRepr(result)，你可以得到和使用dumpTree宏时相同的输出，但是当然你可以在宏的任何你可能有困难的地方调用它。
+
+
+
+
+
+
