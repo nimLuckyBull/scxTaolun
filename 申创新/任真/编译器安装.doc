@@ -1,0 +1,70 @@
+下载编译器
+你可以在Nim官网下载最新版本的编译器
+注意:Nim编译器需要C编译器编译软件.在Windows平台上建议使用Mingw-w64.Linux平台上建议使用GCC(linux一般都集成GCC编译器),Mac平台上建议使用Clang.
+
+二进制文件
+不幸的是,现在只提供了在Windows平台下的直接安装的二进制文件(.exe)
+
+注：Windows下安装过程中，注意勾选复选框，安装完后要添加 nim安装目录/bin” 和 ”nim安装目录/dist/mingw/bin” 到环境变量Path上。
+
+
+Linux下的两种安装方式:
+
+1 基于生成的C代码安装:
+
+这种安装方法对于Linux,Mac OS X以及其他Unix系统是首选方式.稍后可能会提供二进制包.
+
+下载其中一个:
+
+nim-0.11.2.zip (28 MB)                解压： unzip [原文件名].zip
+nim-0.11.2.tar.xz (2.6MB)             解压并解包： tar -Jxvf [原文件名].tar.xz
+
+提取文件并跟随下面的命令:
+
+sh build.sh
+Add $your_install_dir/bin to your PATH.
+
+还有其他的方法来安装Nim(如用install.sh脚本)但这些往往会带来更多的问题。
+
+注:我自己电脑上的安装:
+nim-0.11.2  sh build.sh(之后会出现很多信息)    nim-0.11.2是nim编译器所在的文件夹名
+root@renzhen-pc:~# vim /etc/profile        这是用vim进行配置/etc/profile,也可以使用其他
+root@renzhen-pc:~# source /etc/profile     该语句是修改/etc/profile后不重新启动电脑而使修改生效
+/etc/profile文件中添加编译器的路径:
+PATH=$PATH:~/Nim11/nim-0.11.2/bin
+export PATH
+
+
+2 从github安装  (这个不需要提前下载安装包)
+
+使用下面的命令从源代码安装编译器.改变分支以适应你的要求:
+
+git clone -b master git://github.com/nim-lang/Nim.git
+cd Nim
+git clone -b master --depth 1 git://github.com/nim-lang/csources
+cd csources && sh build.sh
+cd ..
+bin/nim c koch
+./koch boot -d:release
+
+注:master分支总包含最新稳定版本的编译器.如果你想bleeding edge然后切换到devel分支,然后按照上面所描述的相同的命令.
+
+我电脑上的安装:
+
+➜  ~  sudo apt-get install git          先安装git
+➜  ~  git clone -b master git://github.com/Araq/Nim.git
+➜  ~  cd Nim
+➜  Nim git:(master) ✗ cd csources && sh build.sh
+➜  csources git:(master) ✗ cd..
+➜  Nim git:(master) ✗ bin/nim c koch
+➜  Nim git:(master) ✗ ./koch boot -d:release
+
+安装成功后会提示
+Hint: operation successful (81220 lines compiled; 4.402 sec total; 262.268MB) [SuccessX]
+executables are equal: SUCCESS!
+
+
+
+
+
+

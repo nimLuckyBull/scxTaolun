@@ -1,0 +1,859 @@
+Roads Less Taken
+A blend of programming, boats and life.
+编程，船和生活
+
+OCT 29TH, 2014
+
+Nim and OO
+
+Nim is presented as an imperative(命令) language. And yes, it has some of its roots in the Pascal line of languages, but it also has a set of powerful abstraction mechanisms(抽象机制) making it very suitable for object oriented programming. And when I write “object oriented” I am referring to a broader(较广阔的) flexible sense of OO in which objects can be formulated（规划） with attached behavior（附加行为）, polymorphism（多态性） between different objects, some kind of reuse model of code (inheritance etc) and some type of dynamic dispatch.
+
+nim作为一种命令语言呈现。是的，它有一些根源在pascal语言中，但是它有一套强大的抽象机制使它非常适合面向对象编程。当我写“object oriented(面向对象)”的时候，我指的是一个具有更广阔灵活度的OO，它可以通过附加行为规划对象，不同对象之间存在多态性，某种代码重用模型（继承等）和某种类型的动态调度。
+
+Since I am a long time Smalltalker that is my main reference for “good OO” and not the … monstrous（丑陋的，畸形的） OO often seen in Java or C++. Its hard to explain the differences, but let me just say that OO in Smalltalk is elegant and natural, very much like in Ruby or Python - but ever so more streamlined. Smalltalk is a dynamically strongly typed reflective language with a heavily closure based style.
+
+既然我是一个接触smalltalker较长时间的人，所以我提到的主要是“good OO(好对象)”并不是。。。经常在java或者c++中见到的丑陋的对象。很难解释它们之间的不同，但是我只说在smalltalk中的面向对象是优雅的和自然的，与ruby或者python中的面向对象非常类似,但是它甚至更精简。smalltalk是一个动态的强类型反射语言并带有一个大量基于闭包的类型。
+
+In this article I will try to make “sense” out of how to do OO in Nim.
+
+在这篇文章中我将尽力做到怎样在nim中使用面向对象更有意义。
+
+OO in Smalltalk
+
+Smalltalk中的面向对象
+
+We roughly have the following mechanisms in Smalltalk related to OO, and the first 4 are the same as in Java:
+
+在Smalltalk中我们大致有以下关于面向对象的机制，前4条与java中的面向对象相同。
+
+1 Single inheritance class model.
+
+单一继承的类模型
+
+2 Normal “receiver only” dynamic dispatch.
+
+正常的"单一接收器"动态调用
+
+3 Able to do super and self calls.
+
+能够使用super和self调用
+
+4 Garbage collection.
+
+垃圾收集
+
+In addition Smalltalk adds very important salt and pepper, which Java definitely doesn’t have:
+
+另外，Smalltalk增加了在java中明确没有的重要内容：
+
+5 Everything is an object including all datatypes, so we can inherit from them and also extend/override with methods.
+
+一切皆对象，对象包含所有的数据类型，所以我们可以从它们继承，也可以扩展或重写方法
+
+6 Every behavior is a message invoking a method, including all operators. Only exceptions are assignment and return.
+
+每一个行为都是一个信息调用一个方法，包含所有的操作符。唯一的例外是赋值和返回。
+
+7 Dynamic duck typing.
+
+动态duck typing(鸭子类型)。
+
+8 Pervasive（普遍的，扩大的） use of closures（闭包）with support of non local return（非局部回归） enabling expressive protocols.
+
+随着非局部回归能够表达的协议支持闭包普遍使用
+
+Then of course Smalltalk goes “OO Banzai!” with:
+
+当然若带有以下特点，smalltalk会是更完美的面向对象：
+
+9 Classes are objects too, so they have methods and inheritance and a class…
+
+类也是对象，所以它们有方法和继承以及一个类。。。
+
+10 Class variables and class instance variables.
+
+类变量和类的实例变量
+
+11 Full meta level meaning your code can modify itself 100% during runtime.
+
+全元级意味着你的代码可以在运行时100%修改。
+
+And… yes, there is more to Smalltalk - but I think the above captures most big parts of what other developers would call the OO mechanisms in the language. Then there is more in the libraries and tools of course, like for example the excellent Collection classes.
+
+当然，这有更多的关于smalltalk-但是我认为，以上扑捉的大部分是其他开发商可能会叫做语言的面向对象机制。当然在类库和工具中会存在更多，如：优良的集合类。
+
+For doing reasonable OO the Banzai stuff is not needed, its however what enables Smalltalk to be a fully reflective IDE in itself. Bullets 5-9 are also not essential to reasonable OO, but they are what makes Smalltalk transcend（超越） languages like Java, so in that sense its interesting to see what Nim offers in the similar space.
+
+做合理的OO不需要十全十美的东西,不过它是使smalltalk本身成为一种完全反射的IDE。第5-9条对于合理的面向对象不是必不可少的，但是它们使Smalltalk超越其他语言如Java，所以在那个层面，有趣的是看到nim在相同的空间所提供的东西。
+
+So ideally I want to see Nim support at least 1-4 and hopefully also cover 5-8 but using other mechanisms, given that Nim is a totally different beast.
+
+所以理论上我想要看到nim至少支持1到4，希望通过其他机制支持5-8，能实现以上,nim将是一种完全不同的有独特性质的语言。
+
+How does Nim stack up?
+
+Learning Nim is really fun, its like a “box of chocolate” with lots of slick mechanisms to learn. This also makes it slightly confusing - what stuff should I use regularly? What should I avoid? What parts combine to enable OO in Nim? Its not clear :)
+
+学习nim确实很有趣，它就像"一盒巧克力"，带有很多丝滑灵活的机制需要学习。这也使它有些令人迷惑-什么材料我应该经常用到？我该避免什么？哪些部分相结合能在nim中产生对象？这不清楚。。。
+
+And this walk through is also not entirely clear, but its a series of experiments（实验） with concluding remarks（结语） referring back to the Smalltalk laundry list above. Could I restructure（调整）this article? Probably. Did I use too much sample code? Probably. Is the article too long? No doubt.
+
+而且，走过也并不完全清楚，但是它的一系列实验和结语涉及到上面Smalltalk的清单。我可以调整这篇文章吗？可能，我是否用了很多的样例代码？可能。这篇文章太长了吗？毫无疑问
+
+But here we go…
+
+但是，这里我们来过...
+
+
+Procs
+
+We can start with the work horse in Nim - procs. A proc is simply a regular statically typed function. This means we have static compile time binding for them - and they support “overloading” on the arguments, so we can define many procs with different implementations for different types on the arguments.
+
+我们可以从nim中的驿马(work horse)开始-proc。一个过程不过是一个规则的静态类型函数。这意味着我们可以静态编译时绑定它们-并且它们支持参数重载，所以我们可以定义很多对于不同参数类型有不同实现的过程。
+                                                                                    
+Also, Nim introduced so called UFCS before D established that acronym, so syntactically(依照句法地，在语句构成上) these calls are equivalent:
+
+同时，nim介绍了所谓的UFCS在D编程语言建立缩写之前，所以,依照句法这些调用是等价的
+
+fn(a, b)
+a.fn(b)
+
+注：Uniform Function Call Syntax(UFCS)
+Uniform Function Call Syntax (UFCS) is a programming language feature in D that allows any function to be called on an object (as in Object-oriented programming) like the function is a method of its class.[1] UFCS is particularly useful when function calls are chained.
+
+统一函数调用语法（UFCS）是D语言中的一个编程语言特点，允许一个对象调用任何函数（如：如在面向对象编程中）就像函数是它类中的一个的方法。当函数为链调用的时候UFCS特别有用。
+
+Having both proc overloading and the Uniform Function Call Syntax in combination with the neat modules system where one module can define procs using types from other modules (pretty obvious you can do that) - then we already can do “OO looking code” in a simpler fashion. For example we can easily add a reversed() method to the type string that returns a new string with characters reversed.
+
+具有过程重载和统一函数调用语法结合整齐的模块系统，一个模块可以使用来自其他模块的类型定义过程（很明显你可以做到它）-然后我们已经可以以一种更简单的方式实现“OO looking code”。例如，我们可以很容易的为字符串类型添加一个reversed()方法，它返回一个新的反序字符串。
+
+First, lets just verify that string doesn’t already have it. I use Aporia and I have turned on “Enable suggest feature” in Preferences(参数选择), then it tries to help me:
+
+首先，让我们验证字符串开始没有reversed()方法。我使用Aporia并且我已经在参数选择中打开了“启用建议特征”，然后它试图帮助我：
+
+…so nothing there right now. Let’s hack. In the beginning below we see that reversed() already exists for openarray, which means both array and seq types. Then we add it for string:
+
+...所以现在什么都没有。让我们破解。在下面开始我们看到reversed()已经存在于在openarray中了，它意味着数组和序列类型。下面让我们为字符串添加reversed()方法：
+
+# Some data to play with
+var anArray = [1, 2, 3, 4]
+var aSequence = @["a", "b", "c"]
+
+# Aha, in module algorithm.nim we already have reversed() for openarray     //在algorithm模型中我们已经有了openarray的reversed()方法
+# which is the type covering both array and seq.                            //openarray类型包含数组和序列
+
+# Hehe, we can import down here too if we like                              //我们可以导入algorithm模块
+import algorithm
+
+# And yes, reversed works for those guys
+echo(anArray.reversed())
+echo(aSequence.reversed())
+
+# But it doesn't work for string, let's add it                              //reversed()不能作用与字符串，让我们添加它
+proc reversed(s: string) :string =
+  ## Shamefully ripped from algorithm.nim for openarrays
+  result = s
+  var x = 0
+  var y = s.high
+  while x < y:
+    swap(result[x], result[y])
+    dec(y)
+    inc(x)
+
+# Testing it, works for literals      #测试它，作用与字面值
+echo "abc".reversed
+
+# Works for vars too of course :)                                            //当然变量也能工作
+var test = "Goran"
+echo(test)
+echo(test.reversed)
+
+# And yes, not destructive（不是破坏性）. "reverse" (no d) would be destructive.
+echo(test)
+
+...using Aporia we can actually immediately see right after we wrote that proc, that the compiler picked it up and offered it as a suggestion when we started typing in test code:
+
+...使用Aporia，实际上在我们写了字符串reversed过程后我们可以立即看到它，编译器捕获它并提供它作为一个建议，当我们开始编写test代码的时候：
+
+Compile and run:
+
+gokr@yoda:~$ nim c -r --verbosity:0 testreversed.nim
+@[4, 3, 2, 1]
+@[c, b, a]
+cba
+Goran
+naroG
+Goran
+gokr@yoda:~$
+
+Funny sidenote: “Göran” didn’t work so well… UTF8 strikes! But this is fully natural given our non-UTF8 aware implementation, we end up reversing the two UTF8 bytes representing “ö”…
+
+有趣的旁注：“Göran”没有很好的工作...UTF8罢工!但是这是非常自然的给我们non-UTF8（非UTF-8） 意识的实现，我们以反转两个字节的UTF8代表“ö”而结束...
+
+Remark
+
+In each “Remark” heading I try to connect back to Smalltalk and that laundry list（细目清单）. Most Smalltalk implementations have some mechanism for “class extensions” (able to add methods in classes outside your package) and they are quite easy in Nim, even for builtin datatypes, since both procs (and methods, continue reading) are defined separately and operate on types, not “just” objects. And we have the UFCS syntactic sugaring, making the illusion(错觉； 幻想；假象) complete.
+
+在每个备注头我尝试链接到Smalltalk和那个细目清单。多数Smalltalk实现有“类扩展”机制(能够在你包外的类中添加方法)，它们在nim中相当容易，甚至是内置数据类型，因为所有的过程(方法，继续阅读)都是分开定义的以及在类型上操作，不仅仅是对象。我们有UFCS语法糖，造成完成时的假象。
+
+In Nim most operators are handled the same way, so we can implement things that are “hard wired” in other languages, like == (equality) using the same mechanism. This nicely reverbs with Smalltalk.
+
+在nim中很多操作者都以同样的方式处理，所以在其他语言中我们可以实现的事情是“硬链接“，如==（相等）使用相同的机制。这是与Smalltalk很好的混合。
+
+I would say that 5 and 6 on that list have fair support in Nim.
+
+我想说的是上面列出的第5和第6条在nim中有很好的支持。
+
+
+
+Distinct types
+
+One extra twist regarding the fundamental datatypes in Nim is that we can do type aliases and distinct types of them. An alias is just that - same, same. But a distinct type creates a completely separate type - it just happens to “be” the same thing. This makes the builtin datatypes a bit more malleable（可锻造的，有延展性的） and also enables our code to be very typesafe and strict.
+
+在nim中关于基本数据类型一个额外的抽象是我们可以对它们做类型别名和不同类型。一个别名是一样的，相同的。但是一个不同类型创建一个完全独立的类型-它仅仅偶尔才会成为相同的事情。这使得内置数据类型具有更大的可塑性，也能够使我们的代码是类型安全的和严格的。
+
+Play time, just messing a bit://玩的时间，思考一下
+
+eg：
+We create a FreakInt which behaves like an int, but is its own type.  //我们创建了一个FreakInt类型，它的行为像一个int，但是它自己的类型。
+# We can not pass a FreakInt when someone wants an int - and vice versa.//当我们需要int类型的时候，不能传递一个FrealInt类型，反之亦然。
+# This also means that all operators and procs defined for ints, do NOT //这意味着所有的操作符和过程都是为int定义，不能应用于一个FreakInt-它们基本上蠢得要命
+# apply for a FreakInt - they are dumb as hell basically.
+type
+  FreakInt = distinct int
+
+# Ok, so we borrow multiplication by an int           //所以我们通过一个int借乘法
+proc `*` (x: FreakInt, y: int): FreakInt {.borrow.}
+
+# Let's override(重写) `+`: FreakInt also multiplies by 2...   //让我们重写`+`：FreakInt乘2
+proc `+` (x, y: FreakInt): FreakInt =
+  FreakInt((int(x) + int(y)) * 2)
+
+# Can we go down the rabbit hole? What happens with a distinct type of a distinct type?  //用一个distinct类型定义一个distinct类型会发生什么？
+type
+  UltraFreak = distinct FreakInt
+
+# Ok, so we borrow `*` and `+` from FreakInt?         //'*'和'+'是从FreakInt来的吗？
+# No, it turns out it borrows from the base type int - this is NOT inheritance.  //不，事实证明它来自基本的int类型，这不是继承
+proc `+` (x, y: UltraFreak): UltraFreak {.borrow.}
+proc `*` (x: UltraFreak, y: int): UltraFreak {.borrow.}
+
+# UltraFreak ints multiply by 10 when doing subtraction...
+proc `-` (x, y: UltraFreak): UltraFreak =
+  UltraFreak((int(x) - int(y)) * 10)
+
+# Hold onto hat..
+var
+  i: int = 5
+  f: FreakInt = 6.FreakInt # Conversion, same as FreakInt(6)
+  u: UltraFreak = 7.UltraFreak
+
+# Did FreakInt manage to borrow `*` from int? yes          //FreakInt从int成功借到`int`了吗？
+assert(int(f * i) == 30)
+
+# Did FreakInt manage to override `+`? yes
+assert(int(f + f) == 24)
+
+# Did UltraFreak manage to borrow `+` from... what?
+# Ok, from int, not FreakInt!
+assert(int(u + u) == 14)
+
+# Also from int, not FreakInt!
+assert(int(u * i) == 35)
+
+# But we did get our own `-`, right? Yes we did.
+assert(int(u - 3.UltraFreak) == 40)
+
+Remark
+
+It seems to me that distinct types in Nim captures even more of 5 and 6 - while we can’t inherit from fundamental datatypes, we can in fact:
+
+在我看来，在nim中的不同类型捕获的远远超过第5和第6条-虽然我们不能从基本数据类型继承，事实上我们可以：
+
+
+1 Create distinct types from them and extend those.
+
+可以从基本数据类型创造不同的类型然后扩展它们
+
+2 And actually even borrow base type implementations on a proc-by-proc or op-by-op basis. But ONLY from the base type. I guess this also works for other base types than the builtins.
+
+实际上甚至借基本类型是实现一个程序的过程或者一个运算的运算的基础。但是仅仅来自基本类型。我猜想这同样能在其他基本类型上实现不仅是内置类型。
+
+There is quite a lot of other mechanisms that I will not cover here, like overriding “.”-access or the dereferencing operator “[]” and so on. I would say all of this is enough in order to be able to work with fundamental types in “an object oriented manner” similar to how we can do it in Smalltalk.
+
+这里有相当多的其他机制在这里我没有提及，例如重写“.”-访问或者解引用操作符"[]"等等。我会说所有的这些足够了为了能够在“一个面向对象方式“中使用基本数据类型就像在Smalltalk中我们能做的。
+
+Tuples
+
+Ok, let’s move to more complex data. A tuple is like a struct in C or a “record” or a “row” in a database table. Its a composition of named and typed fields in a specific order:
+
+好的，让我们转到更复杂的数据。一个元组就像是C中的一个struct(结构体)或是数据库表中的一个记录或一行。它由名字和类型域以特定的顺序组成：
+
+
+type
+  Person: tuple[name: string, age: int]
+
+So its the simplest heterogenous composition of data in Nim, there is no overhead at all and they do not know their type at runtime (so dynamic dispatch on tuples is not possible) and there is no hiding of members either.
+
+所以它是nim中最简单的数据异构形式，它们没有开销以及它们在运行时不知道自己的类型（所以在元组上的动态调度是不可能的），并且它也没有隐藏的成员。
+
+Thus a tuple is a very basic type, and given their limitations compared to their Bigger Brother the object, they should be used when convenience and/or zero overhead matters more than information hiding or complex attached behavior.
+
+因此一个元组是一个很基本的类型，跟它们的大哥对象相比给出了限制，它们应该用在使用方便或者零开销的问题上而不是信息隐藏或者更复杂的链接行为。
+
+In the Nim standard library we find tuples as the smaller building blocks inside Collection types like KeyValuePair, a Complex number, a Point or a Rectangle in graphics, or a Name & Version combination etc. Small and simple things, and when it comes to Collections the fact that they carry zero storage overhead is of course important. But they are not used even nearly as much as objects are, some quick searches like grep -r "= tuple" in lib shows 25 hits, objects are used typically 10x more, and I probably listed half of the tuple uses in the first sentence of this paragraph :)
+
+在nim的标准库中，我们发现元组就像是集合类型中的一个小积木，比如KeyValuePair,一个复数，一个点或者一个矩形中的圆形，或者一个名字和版本的组合等。小巧并且简单的东西，事实上当涉及到集合它们具有零存储开销当然是重要的。但是它们不经常使用，甚至和对象一样多，一些快速搜索像grep -r"=tuple"在lib显示25hits.对象使用的通常是10倍以上，并且在这一段的第一句话我可能已经列出元组在使用时的一半可能性。
+
+If you are unsure if you should use a tuple or an object, I suspect you are better off with an object.
+
+如果你不确定应该使用一个元组或者一个对象，我建议你最好使用一个对象。
+
+Remark
+
+Tuples are seemingly（看来似乎）most interesting internally in Collections or similar lower level code. For most OO code objects are to be preferred.
+
+元组看似是最有趣的在集合内部或类似的低级别的代码中。对于大部分面向对象代码，对象是更好的选择。
+
+Ref and ptr
+
+Before we go further we need to look at ref and ptr in Nim. Nim can work closer to the metal than say Java or Smalltalk. To be able to do that, Nim needs regular C style pointers, they are declared as ptr Sometype. Such a pointer variable, that directly points to a memory location, is normally used when interfacing with C or when you want to play slightly “outside the box”, for example if you wish to allocate something in memory and pass it over to another thread - keeping track yourself when to deallocate.
+
+在我们走的更远之前我们需要看看nim中的引用和指针。nim可以说比java或者Smalltalk可以更接近元级工作。为了能够做到那样，nim需要规则的c类型的指针，它们被声明为指针类型。例如一个指针变量，它直接指向一个内存的位置，通常在链接c时或者你想在规则外稍微玩一下时使用，例如当你想在内存中分配一些东西，然后传给另一个线程-当释放的时候自己保持跟踪轨迹。
+
+As a language that wants to cover all bases this is essential stuff to have, and of course - this is unsafe territory（领地，领域）, feel free to shoot yourself in your proverbial（众所周知的） foot. But for regular “application level” code we probably do not need to use ptr at all.
+
+作为一种语言想要覆盖所有的基础，这是必不可少的原料，当然那是不安全的地区，感觉就像是用你众所周知的脚射门。但是对于定期的应用层代码我们可能根本不需要使用ptr。
+
+Instead we use ref which is in fact also a pointer, but its a friendlier one that does a bit of automatic allocation and especially deallocation for us using the garbage collector. If we declare type KeyValuePair = tuple[key: string, value: string] without using ref - and then use that to declare a variable x in a proc, then that variable will be allocated in the stack frame when the proc is called, and thus also disappear when the proc returns. Its fairly logical - var x is a tuple, not a pointer to one. Nothing is in this case allocated on the heap and no garbage collection is needed, since the whole value was inside the stack frame.
+
+相反，我们使用的引用它实际上也是一个指针，但是它相对友好，可以自动分配，特别是可以用垃圾收集器释放我们所用的内存单元。如果我们声明类型KeyValuePair = tuple[key: string, value: string]，没有使用ref，然后在一个过程中使用它声明一个变量x，然后当那个程序被调用的时候，变量x将会被分配到栈帧中，因此当程序返回的时候变量会消失。它是合乎逻辑的，变量x是一个元组，没有一个指针指向它。在这个例子中，没有任何东西分配在堆中并且不需要垃圾收集器，因为例子中所有的值都在栈中。
+
+But for making data that lives longer than the current invocation of （调用）a proc, we tend to use “ref” types. For such types the value will be allocated on the heap, and the variable will hold a pointer to it, and the garbage collector tracks our references.
+
+但是对于想让数据比当前的调用过程存活的时间更长，我们需要使用ref类型。对于这个类型值会在堆上分配，并且变量将拥有一个指向它的指针，并且垃圾回收器跟踪我们的引用。
+
+A bit of training code showing that while we normally use ref to refer to objects, we can refer to other types like enums as well:
+
+一点测试代码显示，既然我们通常使用ref来引用对象，那么我们也可以引用其他类型像枚举：
+
+# Playing with ref, enum and assignment
+
+type
+  LightImpl = enum LiGreen, LiYellow, LiRed
+  Light = ref LightImpl
+
+# Convenience method, good style                                      //方便的方法，好的风格
+proc newLight(): Light = new(result)
+
+var
+  # This is a variable allocated in the stackframe                     //这是在栈上分配的一个变量
+  light: LightImpl
+
+  # This allocates and initializes a LightImpl on the heap             //这是在堆上分配和初始化一个LightImpl,并且使lightHolder引用它。如果你分开初始化，
+  # and makes lightHolder refer to it. If you do initialization        //你可以使用new(lightHolder)。
+  # separately you can also use `new(lightHolder)`
+  lightHolder = new(LightImpl)
+
+  # Better style to call a proc to do it.                              //更好的方式是调用一个过程来完成
+  lightHolder2 = newLight()
+
+# Dereference to get the Light value, check it has the default value   //解引用得到Light的值，检查它的默认值
+assert(lightHolder[] == LiGreen)
+
+# Set the local stackframe allocated light to a different value         //设置本地栈框架给light分配一个不同的值
+light = LiYellow
+
+# Assignment copies the bits of light to the Light on the heap          //赋值语句复制light位给在堆中的Light
+# You need to use `[]` dereferencing here.                              //这里你需要使用`[]`解引用
+lightHolder[] = light
+
+# Should be yellow now                                                  //现在应该是yellow吗
+assert(lightHolder[] == LiYellow)
+
+# Let's modify the local stackframe light                               //让我们修改本地栈框架中的light
+light = LiRed
+
+# Make sure the Light on the heap is still yellow                       //确保堆中的Light仍然是yellow
+assert(lightHolder[] == LiYellow)
+
+
+Remark
+
+Since I have been working primarily in Java, C# and Smalltalk the last 20 years (ouch) I have gotten used to variables almost always being references to objects, and objects almost always being allocated on the heap. Nim has value types, and then ref and ptr is used to create reference types pointing at them. I am not a language designer though - perhaps one can express it using more precise（清晰的； 精确的； 正规的； 精密） words.
+
+过去的20年我的主要工作是在Java，C#以及Smalltalk，我已经习惯了变量几乎总是被对象引用，和对象几乎都是在堆上分配的。Nim有值类型，然后引用和指针被用来创建引用类型指向它们。我不是一个语言设计者-也许有人可以用更精确的语言表达它。
+
+Proc variables are automatically allocated in the stack frame, as usual. This is also true of ref variables, but for those we only allocate the actual pointer bits there. But where does it point? This is where an allocation step comes into play - using new(). Calling new() with a ref variable as argument, will allocate the type that the ref variable refers to on the heap, and then set our ref variable to point there. Obviously you can also explicitly（明白地，明确地） pass the type that the ref refers to (in the example code LightImpl) but that makes the code more brittle and less encapsulated.
+
+跟平常一样，过程变量会在栈框架中自动分配。引用变量也是一样，但是对于那些我们只分配实际的指针位。但是它指向哪里呢？这是一个分配步骤进场的地方-使用new().用引用变量作为参数调用new（），将在堆中分配引用变量指向的类型，然后设置我们的引用变量指向这里。显然你也可以显示的传递引用指向的类型（例子代码中的LightImpl），但是那样使得代码很脆弱和更少的封装性。
+
+I think the greater flexibility of Nim, where we can choose to allocate values or references to values has benefits in more complex scenarios - and definitely for performance. It seems fairly well “embedded” in nice mechanisms so that general application level OO code doesn’t suffer too much from this “complication（混乱）”.
+
+我认为nim更大的灵活性是，我们可以选择给变量分配值或者引用更有有好处在更复杂的情况下-并且具有更高的性能。这似乎是相当好的“嵌入式”机制，以至于通用的应用程序层面的面向对象代码并没有从这样的混乱中变糟。
+
+
+Objects
+
+Ah, finally! But this is not your dad’s Java objects, or your granddad’s Smalltalk objects. First of all, we don’t have “classes” - in Nim that term is not really used. Instead we talk about an object type.
+
+最后的！但是这不是你的父亲Java对象，或者你的爷爷Smalltalk对象。首先，我们没有“classes”-在Nim中classes术语并不是真的使用，相反我们讨论一个对象类型。
+
+An object is similar to a tuple, but it knows its type at runtime and we can decide which members we want to be visible outside the containing module. We can also inherit from an existing object type, single inheritance. Let’s hack some code:
+
+一个对象类似于一个元组，但是在运行时它知道它的类型，并且我们可以决定我们要在包含模块外可见的成员。我们也可以从已有的对象类型继承，单一继承。让我们看一些代码：
+
+eg：
+# Distinct types seem useful for units, not essential    #distinct类型对于units看起来有用，对于这个例子代码并不是必不可少的，但是无论如何，让我们使用它
+# for this sample code, but whatever, let's use them.
+type
+  Dollar* = distinct float
+  Kg* = distinct float
+
+# We can define $ for Dollars too
+proc `$`*(x: Dollar) :string =
+  $x.float
+
+# Let's borrow `==` for simpler code
+proc `==`*(x, y: Dollar) :bool {.borrow.}
+
+
+# Let's create a base class for fruits with country              #让我们为fruits创建一个基础类有原产地和美元价格。注意：我们通常从RootObj继承，
+# of origin and a price in dollar. Note that we typically         #它基本上是像Smalltalk和Java中的对象类。
+# inherit from RootObj which is basically like the Object         #注意：我们将Fruit声明为一个引用类型
+# class in both Smalltalk and Java.
+# Also note that we declare Fruit to be a ref type.
+type
+  Fruit* = ref object of RootObj
+    origin*: string
+    price*: Dollar
+
+# We like to deal with different sizes of bananas                 #我们想要处理有不同大小的bananas，所以我们创建一个子类型并且添加一个size成员
+# so we create a subtype and add a size member.
+type
+  Banana* = ref object of Fruit
+    size*: int
+
+# And pumpkins can have very different weights             #pumpkins可以有不同的重量
+type
+  Pumpkin* = ref object of Fruit
+    weight*: Kg
+  # A very big one
+  BigPumpkin* = ref object of Pumpkin
+
+# And... can we also make a non ref subtype of                    #我们也能创建一个引用类型的非引用子类型吗，看起来如此。引用它本身的属性是不会被继承的。
+# a ref subtype, seems so. The ref property itself is
+# thus not inherited.
+type
+  NonRefSubBanana = object of Banana
+
+# Base reduction is just zero, override in subtypes.               #基础reduction仅仅是零，在子类型中重写它。创建这样一个方法是要看看我们是否可以用一个过程
+# Made this a method to see if we can override it with a proc.     #重写方法
+method reduction*(self) :Dollar =
+  Dollar(0)
+
+# Override with a proc. Humpty dumpty, should bind statically      #用一个过程重写。应该静态绑定Bananas，否则调用前一个方法。
+# for Bananas, otherwise call the one above.
+proc reduction*(self: Banana) :Dollar =
+  Dollar(9)
+
+# Our base implementation just makes sure we round off             #我们的基础实现仅仅是确保我们舍入到最近的分和减去任何reduction。
+# to nearest cent and subtracts any reduction.
+import math
+proc calcPriceProc*(self) :Dollar =
+  Dollar(round(self.price.float * 100)/100 - self.reduction().float)
+
+# Lets implement it smarter for Pumpkins. Here we convert           #让我们对于Pumpkins更聪明的实现它。这里我们转换为一个Fruit为了实现调用”super“
+# to a Fruit in order to call the "super" implementation.
+proc calcPriceProc*(self: Pumpkin) :Dollar =
+  Dollar(calcPriceProc(Fruit(self)).float * self.weight.float)
+
+# BigPumpkin - 1000 bucks! Take it or leave it!                       #采取它或者离开它。这是重写基础过程的一个方法
+# This is a method overriding the base proc
+method calcPriceProc*(self: BigPumpkin) :Dollar =
+  Dollar(1000)
+
+
+# A base implementation too, but as a method instead of a proc.          #同样是一个基础实现，但是作为一个方法而不是一个过程。
+method calcPriceMethod*(self: Fruit) :Dollar =
+  Dollar(round(self.price.float * 100)/100 - self.reduction().float)
+
+# And a method similarly for Pumpkins, hum...                      #类似于Pumpkins的一个方法，
+# We can't use the type conversion "super call" technique - because methods   #我们不能使用类型转换”super call“技术-因为方法调用运行时类型-所以我们怎样
+# dispatch on runtime type - so how can we call the method above???           #调用上面的方法？？？ 我们不能，反而依赖于调用基础的过程。
+# We can't, fall back on calling the base proc instead.
+method calcPriceMethod*(self: Pumpkin) :Dollar =
+  Dollar(calcPriceProc(Fruit(self)).float * self.weight.float
+
+Phew! So the above little fruit library sets up some trivial inheritance and adds some procs and methods to these object types which we want to play with to see how the inheritance works. Now, the following code uses the above library:
+
+所以上面的fruit库建立了一些平常的继承和添加了一些过程和方法对这些对象类型，我们想看看这些对象类型的继承是如何工作的。现在，下面的代码使用上面的库：
+
+
+import fruit
+
+# Create some fruits, normally one would not use constructor            #创建一些fruits，通常不会像这样使用构造器语法，而是调用在fruit模块中一个过程
+# syntax like this, instead call a proc in the fruit module             #让它为我们做，封装。
+# that does it for us, encapsulation.
+var p = Pumpkin(origin: "Africa", price: 10.00111.Dollar, weight: 5.2.Kg)
+var b = Banana(origin: "Liberia", price: 20.00222.Dollar)
+
+var bp = BigPumpkin(origin: "Africa", price: 10.Dollar, weight: 15.Kg)
+
+# BigPumpkins have a method overriding the base proc, it works!          #BigPumpkins有一个重写基础过程的方法，它有效工作！
+assert(bp.calcPriceProc() == 1000.Dollar)
+
+# Works for Banana, uses Fruit base proc, we see it rounds to cents      #工作与Banana，使用Fruit基础过程，我们看到它舍入到分，它也为Bananas做了一个对于
+# and it also then make a self call to reduction() for Bananas.          #reduction()的self调用。
+assert(b.calcPriceProc() == 11.0.Dollar)
+
+# Works for Pumpkin, static binding. Rounds to cents (the super call)    #工作与Pumpkin，静态绑定。舍入到分（调用super）并且与重量相乘，没有reduction，正确
+# and multiplies with weight. No reduction, correct.
+assert(p.calcPriceProc() == 52.0.Dollar)
+
+# What happens in a proc generalized for Fruits? Type info is lost so    #在一个过程中推广Fruits会发生什么？类型信息丢失，所以静态绑定将会绑定到基础实现
+# static binding will bind to base implementation regardless of what x is.  #不管x是什么
+proc testingProcs(x: Fruit) :Dollar =
+  # Here the type of x is Fruit
+  x.calcPriceProc()
+
+# Lets call the above proc and see...                          #让我们调用上面的过程看看。。。
+# Oops, the self send reduction() misses that its a Banana!    
+assert(testingProcs(b) == 20.Dollar) # Should be 11
+# Oops, the override of calcPriceProc() for Pumpkins is also missed!      #为Pumpkins重写的calcPriceProc()也丢失了！
+assert(testingProcs(p) == 10.0.Dollar) # Should be 52
+
+# But with generics it works just fine... We can also constrain it to     #但是使用泛型它工作的很好。。。我们也可以限制它只接受Banana和Pumpkin
+# only accept Banana and Pumpkin.
+proc testingProcsGeneric[T: Banana|Pumpkin](x: T) :Dollar =
+  # Here Nim will produce multiple variations of this method, for both Banana   #这里nim将产生这个方法的多个变形，所以类型信息不会丢失。
+  # and Pumpkins (call sites below), so type information is not lost.
+  # It should call the correct proc.
+  x.calcPriceProc()
+
+# All good with generics
+assert(testingProcsGeneric(b) == 11.0.Dollar)
+assert(testingProcsGeneric(p) == 52.0.Dollar)
+
+# If we call a method the type of x doesn't matter, its the type of the object   #如果我们调用一个方法类型x无关紧要，其类型对象本身的价值。
+# itself that counts.
+proc testingMethods(x: Fruit) :Dollar =
+  # Here we will dispatch dynamically         #这里我们将动态调用
+  x.calcPriceMethod()
+
+# All good... or??? Oops, the reduction for Bananas is lost!           #所有的都很好。。。或者？？？Bananas的reduction（）丢失了！
+assert(testingMethods(b) == 20.0.Dollar) # Should be 11
+# The override for Pumpkin works fine                          #为Pumpkin重写的工作的很好
+assert(testingMethods(p) == 52.0.Dollar)
+
+echo "All good, well, or at least we got what the comments said."
+
+
+Did you follow all that? Really? Then explain it to me! :)
+
+Basically, mixing procs and methods … is tricksy（淘气的，顽皮的）.
+
+So let’s shorten, remove comments, regroup code into “classes” and only use methods. To solve the “super call” we throw in a template so that we can reuse that code in two different methods. Not the same, but ok:
+
+所以让我们缩短，移除注释，将代码重组为类”classes“，并且只使用方法。我们把解决”super call“的方法放在一个模版中，以至于我们可以在两个不同的方法中重用代码。不是相同的，但是ok：
+
+import math
+
+# Dollars and Kgs
+type
+  Dollar* = distinct float
+  Kg* = distinct float
+
+proc `$`*(x: Dollar) :string =
+  $x.float
+
+proc `==`*(x, y: Dollar) :bool {.borrow.}
+
+
+# Fruit class
+type
+  Fruit* = ref object of RootObj
+    origin*: string
+    price*: Dollar
+
+method reduction*(self: Fruit) :Dollar =
+  Dollar(0)
+
+# Code broken out in a template for reuse, since super call doesn't
+# fly with methods yet.
+template basePrice(): Dollar =
+  Dollar(round(self.price.float * 100)/100 - self.reduction().float)
+
+method calcPrice*(self: Fruit): Dollar =
+  # Use template, zero cost
+  basePrice()
+
+
+# Banana class
+type
+  Banana* = ref object of Fruit
+    size*: int
+
+method reduction*(self: Banana): Dollar =
+  Dollar(9)
+
+
+# Pumpkin
+type
+  Pumpkin* = ref object of Fruit
+    weight*: Kg
+
+method calcPrice*(self: Pumpkin) :Dollar =
+  # Use template, zero cost
+  Dollar(basePrice().float * self.weight.float)
+
+
+# BigPumpkin
+type
+  BigPumpkin* = ref object of Pumpkin
+
+method calcPrice*(self: BigPumpkin) :Dollar =
+  Dollar(1000)
+
+And the code testing it:    
+
+测试代码：
+
+import fruit
+
+var p = Pumpkin(origin: "Africa", price: 10.00111.Dollar, weight: 5.2.Kg)
+var b = Banana(origin: "Liberia", price: 20.00222.Dollar)
+var bp = BigPumpkin(origin: "Africa", price: 10.Dollar, weight: 15.Kg)
+
+assert(bp.calcPrice() == 1000.Dollar)
+assert(b.calcPrice() == 11.0.Dollar)
+assert(p.calcPrice() == 52.0.Dollar)
+
+# What happens in a proc generalized for Fruits? Type info is lost
+# but since we now use only methods, it doesn't matter
+proc testing(x: Fruit) :Dollar =
+  x.calcPrice()
+
+assert(testing(b) == 11.Dollar)
+assert(testing(p) == 52.0.Dollar)
+assert(testing(bp) == 1000.Dollar)
+
+echo "All good with only methods."
+
+What I learned from the above:
+
+我从上面学到的：
+
+Single inheritance works fine in Nim, no surprises really. Sure, procs and methods are defined “on their own” but there is no practical difference.
+
+单继承在nim中工作的很好，没有惊喜，真的。当然，过程和方法被定义为自己的，但没有实际的不同。
+
+Procs bind statically and calling a “super” proc is easy using type conversion. But… if the super method calls other methods… ouch! Type info lost! Better to use templates or similar as above.
+
+使用类型转换过程静态绑定和调用一个”super“过程很容易的。但是...如果super方法调用其他方法...！类型信息丢失！更好的是使用模版或者与类似上面。
+
+If we don’t use generics but instead use base types (like Fruit) for arguments, we will “lose” type information, and potentially we “miss” calling our overrides! Not a surprise to a hardcore static guy, but… as a dynamic typing dude - this is a gotcha! Using methods only of course avoids that issue.
+
+对于参数如果我们不使用泛型而是使用基础类型（例如Fruit），我们将丢失类型信息，以及我们可能错过调用我们的重写方法。对于一个静态的类型这并不惊讶，但是作为一个动态类型-这是个问题！仅使用方法当然避免的这个问题。
+
+Methods and procs can be mixed, but here there be dragons. I think.
+
+方法和过程可以混合，但是这里有问题。我认为。
+
+If we use methods we currently can’t call a “super” method. Workaround today is to factor out the base implementation, for example in a template, as done above. UPDATE: See part IV about this.
+
+如果我们使用方法，我们目前不能调用一个”super“方法。今天的解决方法是因素的基础实现，例如在一个模版里，如上面所做的那样。更新：See part IV about this。
+
+If we use procs only and apply generics (I did but didn’t bother including that code), it works perfectly fine too in this example. But as noted, do not use type conversion to a base type to do super calls, unless you are sure what you are doing. :)
+
+如果我们仅使用过程和应用泛型（我实现了但是这不包括那个代码），在这例子中它也能工作的很好。但是要注意的是，不要使用类型转换为一个基类型为了super调用，除非你确定你在做什么。
+
+If you have several classes like this in the same module, take care of the order of procs - make sure your overrides are defined before their uses. Otherwise you can easily end up calling a base implementation, just because the compiler hasn’t seen the override definition yet!
+
+如果在相同的模块中你有几个类似这样的类，小心过程的顺序-确保你的重写在使用它们之前已经定义。否则你可以很容易的以调用一个基础实现而结束，仅仅是因为编译器没有看到重写的定义！
+
+Remark
+
+Phew. In summary I would say the OO features are mostly there. Super calls (for both procs and methods I would say) is evidently（明显地，显而易见） a “hole” in the language, I think it needs some kind of solution. But coding and testing is a very nice experience, its not that hard to get into it. But I would say it will take some practice before you know what routes are available for OO in Nim.
+
+总之，我想说的面向对象的特征主要在这里。super调用（我说的是对于过程和方法）在语言中明显的是一个”hole“。我认为它需要某种解决办法。但是编码和测试是一个很好的经验，它不是很难进去。但是我想说在你知道什么路线可用于nim中面向对象之前它需要一些练习。
+
+Conclusion
+
+I have only begun discovering Nim so I have yet to see how OO works in a larger Nim codebase. I also haven’t really explored lambdas and several of the datatypes yet, nor macros and templates and lots of other things. But I feel confident that Nim can do OO code quite well.
+
+我只是开始发现nim所以我还没有看到面向对象怎样工作在一个更大的nim代码库中。我也没有真正的探索lambdas和几种数据类型呢，还有宏和模版以及许多其他的东西。但是我很有信心nim可以将面向对象代码做的很好。
+
+Go Nim!
+
+Instead of calling it static_call（静态调用） - implying that the call resolution is made at compile time statically, the name ended up as procCall - implying the call resolution is simply done just like its done for procs. Same, same - different words. To put it another way, even though we are calling a method, let the static types of the arguments decide which method to call, not the actual runtime types.
+//叫它static_call，表明这个调用方案实在编译时静态形成的，名字以procCall结尾的，表明调用方案是简单形成就像它的完成过程，相同，相同-不同的词。换句话说，即使我们调用一个方法，让该参数的静态类型决定调用哪个方法，而不是实际的运行类型。
+
+A bit of repetition from the earlier articles - today you can select among overloaded procs to call by using type conversion, so if you want to call myProc that takes an argument of type A when you have an object of type B in your hand (B being a sub type of A), you just do myProc(A(b)).
+//与早期的文章有些重复，现在通过类型转换，你可以在重载方法中选择，所以如果你想调用一个带有类型A的myProc方法，当你有一个类型B的对象(B类型是A的子类型)，你可以这样调用myProc(A(b))
+
+This is called a type conversion and can be viewed as a type safe cast(安全性塑造), it only works if its safe to do it. Nim also has cast but generally its something you should only use if you know what the heck you are doing. :)
+//这叫做类型转换，可以看做是一种安全类型塑造，它只在安全下工作。nim也具有安全塑造，但是一般来说，你应该只使用如果你知道你是要做什么。
+
+Now… methods don’t rely on static typing - they resolve based on the actual runtime type of the objects - that’s their whole reason for existing and this is essential in supporting more complex OO code. So the type conversion technique in itself only works for selecting among overloaded procs, not methods.
+//现在。。方法不依赖静态类型-它们的解决以对象的实际运行类型为基础-这是整个存在的理由，在支持更复杂的面向对象编程这是必不可少的。所以在本身的类型转换技术只适用于在重载的过程中选择，而不是方法。
+
+But now, with the addition of procCall we can call overloaded methods using the exact same technique. Our Fruit code from earlier articles can now be simplified - we no longer need to factor out the base implementation of calcPrice as a method under a different name basePrice. And it still works as intended, here is the updated code
+//但是现在，随着procCall的添加，我们可以使用相同的技术调用重载的方法。前面文章的fruit代码可以简化，
+
+Fruit library using methods and procCall
+
+eg:
+import math
+
+# Dollars and Kgs
+type
+  Dollar* = distinct float
+  Kg* = distinct float
+
+proc `$`*(x: Dollar) :string =
+  $x.float
+
+proc `==`*(x, y: Dollar) :bool {.borrow.}
+
+
+# Fruit class
+type
+  Fruit* = ref object of RootObj
+    origin*: string
+    price*: Dollar
+
+method `$`*(self: Fruit): string =
+  self.origin & " " & $self.price
+
+method reduction(self: Fruit) :Dollar =
+  Dollar(0)
+
+
+method calcPrice*(self: Fruit): Dollar =
+  Dollar(round(self.price.float * 100)/100 - self.reduction().float)
+
+
+# Banana class
+type
+  Banana* = ref object of Fruit
+    size*: int
+
+method reduction(self: Banana): Dollar =
+  Dollar(9)
+
+method calcPrice*(self: Banana): Dollar =
+  procCall Fruit(self).calcPrice()
+
+# Pumpkin
+type
+  Pumpkin* = ref object of Fruit
+    weight*: Kg
+
+method reduction(self: Pumpkin): Dollar =
+  Dollar(1)
+
+method calcPrice*(self: Pumpkin) :Dollar =
+  Dollar(procCall(Fruit(self).calcPrice()).float * self.weight.float)
+
+
+# BigPumpkin
+type
+  BigPumpkin* = ref object of Pumpkin
+
+method calcPrice*(self: BigPumpkin) :Dollar =
+  Dollar(1000)
+
+
+# Construction procs
+proc newPumpkin*(weight, origin, price): Pumpkin = Pumpkin(weight: weight, origin: origin, price: price)
+proc newBanana*(size, origin, price): Banana = Banana(size: size, origin: origin, price: price)
+proc newBigPumpkin*(weight, origin, price): BigPumpkin = BigPumpkin(weight: weight, origin: origin, price: price)
+
+
+As we can see the “syntactic style” can vary as usual, in line 40 we can use procCall without parenthesis, but on line 51 we need to use it in a “calling style” in order for precedence to work out.
+//正如我们所见，语法风格可以像往常一样，在第40行women我们可以使用procCall不带括号，但是在51行，我们需要使用它，在一个调用风格，为了优先解决。
+
+So… one may wonder, why not just have something like super as in Smalltalk or Java etc? The reason is quite simple, Nim supports multiple dispatch - in other words in Nim we can dispatch based on the types of several of the arguments, as long as they are objects. There is no specific argument in the method call that is privileged as “self”, we just tend to use the first argument by convention（按照惯例）as “the receiver”. This also means that “super” has no reasonable meaning in Nim, super of who?
+//你可能疑问，在NiM中为什么不像Smalltalk或者Java那样有super类似的东西呢？原因很简单，nim支持多个调度，换句话说，在nim中可以调度多参数的类型，只要它们是对象。在方法中调用中没有明确的参数，使用特殊的"self"，我们倾向于使用第一个参数按照惯例作为接收器。这也意味着super在nim中没有存在的意义。
+
+The type conversions you would use together with procCall does spell out（拼出） the “super type” explicitly（明白的，明确的） (in our example above - “Fruit”), thus making it very clear which method you want to call. A puritan would possibly claim that it “couples” the class with its superclass too much (compared to the more abstract uncoupled “super”). But I think this explicit style fits the Nim mindset better - and even if this makes changing superclasses a bit more tedious（单调的，冗长乏味的） (you need to hunt down（搜索直至找到） procCalls and fix the type conversions) - its nothing that some future refactoring tools couldn’t easily fix, and changing superclasses isn’t what you do every minute anyway.
+//类型转换和procCall一起使用可以明确地拼出“超类”（在我们上面的例子中），从而使它很清楚你想调用的方法。清教徒可能宣称它“夫妻”其类有很多超类。但我认为这明确的风格更适合Nim的好心态，即使它使改变超类有些单调（你需要找到procCalls并适合类型转换）任何未来的重构工具都没有办法轻易解决，不管怎样修改父类并不是你每分钟都想做的事。
+
+One could also argue that the intention of the programmer is slightly lost with this style. It doesn’t obviously read as “call the super implementation”, and I suspect we may find coders using this also throwing in a small comment stating that hey, this is a super call.
+//可以说程序员的意图是稍微失去这种风格，它并不明显读作“call the super implementation(调用超级实现)”，我怀疑我们可能发现编辑器使用这也在抛出一个短评：这是一个超级调用“。
+
+The mechanism also enables “super super” since you can explicitly skip over intermediate classes which of course is generally bad style, but at the same time, explicitness follows the principle of least surprise :)
+
+
+Calling overloads on self
+
+Another scenario we easily could have is a class with several overloads of a method foo in which one or many of them wants to call the “primary” implementation of the behavior. This is in fact technically the same scenario as the “super call”, and would be solved the same way - its just an example of multiple dispatch where we are dispatching on more than the first argument. Let’s say we have a Foo class which holds a seq of fruit names, for some … odd reason. And we want to be able to add fruit names to it by sending in various different objects, well, a Fruit obviously, but also collection of Fruits etc.
+//另一种我们容易遇到的情况是：一个类有一个方法的多种重载，它们中的一个或多个想调用”主“实现的行。这在技术上跟”超类“调用是一样的情况，使用相同的方式解决-这只是一个例子，多个调度是超过第一个参数调度。我们有一个Foo类，有一串水果的名字，。。我们想通过传递不同的对象添加水果的名字，
+
+eg:
+import fruitmethod
+
+# Foo class
+type
+  Foo* = ref object of RootObj
+    fruits*: seq[string]
+
+# The core method we want to call
+method add(self: Foo, fruit: Fruit) =
+  echo "   ...and here we actually add it"
+  self.fruits.add($fruit)
+
+method add(self: Foo, banana: Banana) =
+  echo "Adding a Banana"
+  procCall self.add(Fruit(banana))
+
+method add(self: Foo, pumpkin: Pumpkin) =
+  echo "Adding a Pumpkin"
+  procCall self.add(Fruit(pumpkin))
+
+method add(self: Foo, fruits: seq[Fruit]) =
+  echo "Adding a bunch of Fruit"
+  for f in fruits:
+    self.add(f)
+
+# This is a constructor proc that is normally used to initialize objects
+proc newFoo(): Foo =
+  result = Foo(fruits: newSeq[string]())
+
+when isMainModule:
+  # Get us a Foo
+  var foo = newFoo()
+
+  # Add a single Banana
+  foo.add(newBanana(size = 0, origin = "Liberia", price = 20.Dollar))
+
+  # Create a seq of Fruit
+  var s = newSeq[Fruit]()
+  var b = newBanana(size = 0, origin = "Liberia", price = 20.00222.Dollar)
+  var p = newPumpkin(weight = 5.2.Kg, origin = "Africa", price = 10.00111.Dollar)
+  s.add(b)
+  s.add(p)
+
+  # Add them all, this will first call the method for a seq of Fruit,//全部添加它们，这会第一次调用一系列水果的方法
+  # and that method will in turn call the one for Banana and the one for Pumpkin//那些方法会依次调用banana方法和Pumpkin方法
+  # and those in turn will use procCall to call the primary method for Fruit.//那些会依次使用procCall去调用主方法
+
+  foo.add(s)
+
+
+
+As we can see above we need to use procCall on line 15 and 19 in order to be able to call the add method that takes a Fruit from the other add methods. So yes, this is not only useful for doing classic super calls
+//从上面可以看到，我们需要用procCall在15行和19行，为了能够调用add方法，得到一个水果从其他add方法。这不仅有利于做经典超级调用。
+
+Conclusion
+//结论
+
+The mechanism procCall solves the super call problem with methods, and it also solves similar use cases along the way. As far as I can tell this removes the last “hurdle（障碍）” for being able to do serious OO coding in Nim.
+//procCall机制解决了方法的超级调用问题，它也解决了相同的用户案例。据我所知，它移除了最后的障碍，能够在Nim中做认真的面向对象编程。
+
+
+
+
+
+
